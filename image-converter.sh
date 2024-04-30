@@ -78,21 +78,25 @@ parse_params "$@"
 setup_colors
 
 file=${args[0]}
+filename=$(basename "${file}")
 
 # Check if necessary file for conversion exists
 if ! [[ -f kindle_colors.gif ]]; then
   die "${RED}Error:${NOFORMAT} Missing kindle_colors.gif file"
 fi
 
+# Create folder for converted files
+mkdir -p converted
+
 # Check if target file name is already taken
-if [[ -f converted_${file} ]] && [[ -z "${OVERWRITE-}" ]]; then
-  die "${RED}Error:${NOFORMAT} Command would overwrite file ${BLUE}converted_${file}${NOFORMAT}\n   use --overwrite to proceed anyways"
+if [[ -f converted/${filename} ]] && [[ -z "${OVERWRITE-}" ]]; then
+  die "${RED}Error:${NOFORMAT} Command would overwrite file ${BLUE}converted/${filename}${NOFORMAT}\n   use --overwrite to proceed anyways"
 fi
 
 convert "${file}" -filter LanczosSharp -resize 758x1024 -background ${background-} \
          -gravity center -extent 758x1024 -colorspace Gray -dither FloydSteinberg \
          -remap kindle_colors.gif -quality 75 -define png:color-type=0 \
-         -define png:bit-depth=8 "converted_${file}"
+         -define png:bit-depth=8 "converted/${filename}"
 
 msg "Image converted!"
-msg "   ${BLUE}converted_${file}${NOFORMAT}"
+msg "   ${BLUE}converted/${filename}${NOFORMAT}"
