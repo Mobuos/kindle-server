@@ -16,3 +16,7 @@ Cargo.lock
 # Ignore test png files
 images/
 converted/
+
+# Added by cargo
+
+/target
