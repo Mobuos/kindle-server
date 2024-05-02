@@ -1,5 +1,5 @@
-// mod image_converter_wrapper;
-// use image_converter_wrapper as ic;
+mod image_converter_wrapper;
+use image_converter_wrapper as ic;
 // mod kindle_manager_wrapper;
 // use kindle_manager_wrapper as km;
 
@@ -32,6 +32,7 @@ async fn submit<'r>(mut form: Form<Upload<'r>>) -> std::io::Result<()> {
     let filename = form.filename;
     println!("Filename: {}", form.filename);
     form.file.persist_to(format!("images/{}", filename)).await?;
+    ic::convert(format!("images/{}", filename).as_str(), "black");
     // TODO: Call functions to convert image and transfer it to the kindle
     Ok(())
 }
