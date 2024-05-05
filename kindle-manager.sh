@@ -12,7 +12,7 @@ Usage: $(basename "${BASH_SOURCE[0]}") [-h] -l location -a address -d -p -g file
 Utility script for managing files in the kindle
 
 Available options:
--l, --location  Defines working location
+-l, --location  Defines working location, default is /mnt/us/images
 -a, --address   Defines address of kindle device, to be used in ssh
 -d, --delete    Deletes a given file
 -p, --push      Pushes a given file
@@ -81,7 +81,7 @@ parse_params() {
   args=("$@")
 
   # check required params and arguments
-  [[ -z "${location-}" ]] && die "Missing required parameter: location"
+  [[ -z "${location-}" ]] && location="/mnt/us/images"
   [[ -z "${address-}" ]] && die "Missing required parameter: address"
 
   if [[ -n ${DELETE-} || -n ${PUSH-} || -n ${SET-} ]] ; then
