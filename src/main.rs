@@ -28,6 +28,11 @@ struct UploadImage<'v> {
     file: TempFile<'v>,
 }
 
+#[catch(404)]
+fn not_found(req: &Request<'_>) -> Markup {
+    errors::e404(&req.uri().to_string())
+}
+
 #[get("/hello/<name>")]
 fn hello(name: &str) -> Markup {
     let title = "Hello";
@@ -35,9 +40,9 @@ fn hello(name: &str) -> Markup {
     pages::hello(title, name, items)
 }
 
-#[catch(404)]
-fn not_found(req: &Request<'_>) -> Markup {
-    errors::e404(&req.uri().to_string())
+#[get("/")]
+fn index() -> Markup {
+    pages::main()
 }
 
 // FIXME: Returning Status directly is not recommended, see https://rocket.rs/guide/v0.5/responses/#responses
@@ -107,8 +112,7 @@ fn rocket() -> _ {
         panic!("{error}");
     }
     rocket::build()
-        .mount("/", routes![submit])
-        .mount("/", routes![hello])
-        .mount("/", FileServer::from(relative!("/static")))
+        .mount("/", routes![submit, index, hello])
+        // .mount("/", FileServer::from(relative!("/static")))
         .register("/", catchers![not_found])
 }

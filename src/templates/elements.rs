@@ -1,4 +1,4 @@
-use maud::{html, Markup, DOCTYPE};
+use maud::{html, Markup, PreEscaped, DOCTYPE};
 
 pub fn nav() -> Markup {
     html! {
@@ -11,11 +11,14 @@ pub fn base(title: &str, content: Markup) -> Markup {
         (DOCTYPE)
         head {
             meta charset="utf-8";
-            title { "Tera Demo - " (title)}
+            title { "KS - " (title)}
+            (PreEscaped("<script src=\"https://unpkg.com/htmx.org@1.9.12\"
+            integrity=\"sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2\" 
+            crossorigin=\"anonymous\"></script>"))
         }
         body {
             (nav())
-            (content)
+            (content) br;
             footer {
                 a href="/" { "Home" }
             }
