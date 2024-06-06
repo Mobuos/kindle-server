@@ -113,6 +113,6 @@ fn rocket() -> _ {
     }
     rocket::build()
         .mount("/", routes![submit, index, hello])
-        // .mount("/", FileServer::from(relative!("/static")))
+        .mount("/fs/", FileServer::from(relative!("/static")))
         .register("/", catchers![not_found])
 }
