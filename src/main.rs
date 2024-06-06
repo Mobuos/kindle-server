@@ -11,7 +11,11 @@ use rocket::form::Form;
 use rocket::fs::{relative, FileServer, TempFile};
 use rocket::http::Status;
 
-use rocket_dyn_templates::{context, tera::Tera, Template};
+use maud::Markup;
+
+// maud templates
+mod templates;
+use templates::{errors, pages};
 
 #[macro_use]
 extern crate rocket;
@@ -25,41 +29,15 @@ struct UploadImage<'v> {
 }
 
 #[get("/hello/<name>")]
-fn hello(name: &str) -> Template {
-    Template::render(
-        "hello",
-        context! {
-            title: "Hello",
-            name: Some(name),
-            items: vec!["One", "Two", "Three"],
-        },
-    )
+fn hello(name: &str) -> Markup {
+    let title = "Hello";
+    let items = vec!["One", "Two", "Three"];
+    pages::hello(title, name, items)
 }
 
 #[catch(404)]
-fn not_found(req: &Request<'_>) -> Template {
-    Template::render(
-        "error/404",
-        context! {
-            uri: req.uri()
-        },
-    )
-}
-
-fn customize(tera: &mut Tera) {
-    tera.add_raw_template(
-        "about.html",
-        r#"
-        {% extends "base" %}
-
-        {% block content %}
-            <section id="about">
-              <h1>About - Here's another page!</h1>
-            </section>
-        {% endblock content %}
-    "#,
-    )
-    .expect("valid Tera template");
+fn not_found(req: &Request<'_>) -> Markup {
+    errors::e404(&req.uri().to_string())
 }
 
 // FIXME: Returning Status directly is not recommended, see https://rocket.rs/guide/v0.5/responses/#responses
@@ -133,5 +111,4 @@ fn rocket() -> _ {
         .mount("/", routes![hello])
         .mount("/", FileServer::from(relative!("/static")))
         .register("/", catchers![not_found])
-        .attach(Template::fairing())
 }
