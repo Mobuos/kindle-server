@@ -20,12 +20,19 @@ use templates::{errors, pages};
 #[macro_use]
 extern crate rocket;
 
+// Upload Image Form
 #[derive(Debug, FromForm)]
 struct UploadImage<'v> {
     #[field(validate = len(1..=20))]
     filename: &'v str,
     // #[field(validate = supported_images())]
     file: TempFile<'v>,
+}
+
+// Simple text form
+#[derive(Debug, FromForm)]
+struct TextForm {
+    text: String,
 }
 
 #[catch(404)]
@@ -42,7 +49,8 @@ fn hello(name: &str) -> Markup {
 
 #[get("/")]
 fn index() -> Markup {
-    pages::main()
+    let image_names = km::get_image_names();
+    pages::main(&image_names)
 }
 
 // FIXME: Returning Status directly is not recommended, see https://rocket.rs/guide/v0.5/responses/#responses
@@ -79,6 +87,12 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Status {
     Status::Ok
 }
 
+#[post("/set", data = "<image_name>")]
+async fn set(image_name: Form<TextForm>) -> Status {
+    km::set(&image_name.text);
+    return Status::Ok;
+}
+
 // TODO: for some reason is identifying webp as .bin (?)
 // fn supported_images<'v>(file: &TempFile<'_>) -> Result<(), Errors<'v>> {
 //     if let Some(file_ct) = file.content_type() {
@@ -112,7 +126,9 @@ fn rocket() -> _ {
         panic!("{error}");
     }
     rocket::build()
-        .mount("/", routes![submit, index, hello])
-        .mount("/fs/", FileServer::from(relative!("/static")))
+        .mount("/", routes![submit, index, hello, set])
+        .mount("/images/", FileServer::from(relative!("/images")))
+        .mount("/converted/", FileServer::from(relative!("/converted")))
+        .mount("/static/", FileServer::from(relative!("/static")))
         .register("/", catchers![not_found])
 }

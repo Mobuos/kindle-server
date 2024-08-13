@@ -2,7 +2,7 @@ use maud::{html, Markup};
 
 use super::elements::base;
 
-pub fn main() -> Markup {
+pub fn main(server_images: &Vec<String>) -> Markup {
     let content = html! {
         h1 { "Olá mundo" }
 
@@ -14,6 +14,19 @@ pub fn main() -> Markup {
             input type="file" id="file" name="file" accept="image/png, image/jpeg";
             br; br;
             button type="submit" {"Submit"}
+        }
+
+        #server-images {
+            @for image in server_images {
+                form {
+                    input type="hidden" name="text" value=(image);
+                    img #image src={"converted/"(image)}
+                        onerror="this.onerror=null; this.src='static/resources/notfound.png'"
+                        hx-post="/set"
+                        hx-vals={"{{\"image_name\": "(image)"}}"}
+                        hx-trigger="click";
+                }
+            }
         }
     };
     base("Main", content)

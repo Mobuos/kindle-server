@@ -2,6 +2,7 @@ use std::{
     path::Path,
     process::{Command, Output},
 };
+
 // TODO: Wrapper functions
 // TODO: Check if already exists before attempting push or set
 
@@ -37,7 +38,7 @@ pub fn file_exists(filename: &str) -> bool {
         .check_status();
 
     println!("kindle-manager: file_exists");
-    let files = String::from_utf8(check_output.stderr).unwrap();
+    let files = String::from_utf8(check_output.stdout).unwrap();
     println!("File to be checked: {}", filename);
     println!("{}", files);
 
@@ -79,9 +80,26 @@ pub fn set(filename: &str) {
             .arg("--set")
             .arg(filename)
             .output()
-            .expect(format!("Failed to set {}!", filename).as_str())
+            .expect(format!("Failed to set '{}'!", filename).as_str())
             .check_status();
     } else {
-        panic!("File does not exist! Failed to set file!");
+        panic!("File '{}' does not exist! Failed to set file!", filename);
     }
+}
+
+pub fn get_image_names() -> Vec<String> {
+    let output = Command::new("bash")
+        .arg("./kindle-manager.sh")
+        .arg("-a")
+        .arg("kindle")
+        .arg("--get-all")
+        .output()
+        .expect("Failed to get images on Kindle");
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    stdout
+        .split('\n')
+        .map(|s| s.to_string())
+        .filter(|s| !s.is_empty())
+        .collect()
 }
