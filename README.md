@@ -2,9 +2,4 @@
 
 this project aims to be a simple web ui for displaying images on a jailbroken kindle
 
-Run with docker
-(wip)
-```bash
-docker build . -t kindle_server
-docker run -d -p 8000:8000 --name kindle kindle_server
-```
+Running inside of docker seems more complicated than I thought (Because the docker needs ssh and access to the kindle) so I'm just going to pretend like that doesn't exist for now
