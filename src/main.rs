@@ -117,6 +117,7 @@ async fn set(image_name: Form<TextForm>) -> Status {
 fn setup() -> std::io::Result<()> {
     // Create necessary dirs
     fs::create_dir_all("images/tmp")?;
+    fs::create_dir_all("converted")?;
     Ok(())
 }
 
