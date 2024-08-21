@@ -4,7 +4,12 @@
     flex-direction: row;
 }
 
-#image {
+form.htmx-swapping {
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+}
+
+.image {
     cursor: pointer;
 
     display: block;

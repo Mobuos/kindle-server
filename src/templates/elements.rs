@@ -26,3 +26,17 @@ pub fn base(title: &str, content: Markup) -> Markup {
         }
     }
 }
+
+pub fn show_image(image_name: &str) -> Markup {
+    html! {
+        form {
+            input type="hidden" name="text" value=(image_name);
+            img .image src={"converted/"(image_name)}
+                onerror="this.onerror=null; this.src='static/resources/notfound.png'"
+                hx-post="/set"
+                hx-vals={"{{\"image_name\": "(image_name)"}}"}
+                hx-trigger="click";
+            button hx-delete={"/"(image_name)} hx-target="closest form" hx-swap="outerHTML swap:0.5s" { "Deletar" }
+        }
+    }
+}

@@ -103,3 +103,19 @@ pub fn get_image_names() -> Vec<String> {
         .filter(|s| !s.is_empty())
         .collect()
 }
+
+pub fn delete_image(filename: &str) {
+    if file_exists(filename) {
+        Command::new("bash")
+            .arg("./kindle-manager.sh")
+            .arg("-a")
+            .arg("kindle")
+            .arg("--delete")
+            .arg(filename)
+            .output()
+            .expect(format!("Failed to delete '{}'!", filename).as_str())
+            .check_status();
+    } else {
+        println!("File {} not found!", filename);
+    }
+}

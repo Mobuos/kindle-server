@@ -4,14 +4,14 @@ mod kindle_manager_wrapper;
 use kindle_manager_wrapper as km;
 use rocket::Request;
 
-use std::fs;
 use std::path::Path;
+use std::{fs, io};
 
 use rocket::form::Form;
 use rocket::fs::{relative, FileServer, TempFile};
 use rocket::http::Status;
 
-use maud::Markup;
+use maud::{html, Markup};
 
 // maud templates
 mod templates;
@@ -25,6 +25,7 @@ extern crate rocket;
 struct UploadImage<'v> {
     #[field(validate = len(1..=20))]
     filename: &'v str,
+    set_image: bool,
     // #[field(validate = supported_images())]
     file: TempFile<'v>,
 }
@@ -57,18 +58,20 @@ fn index() -> Markup {
 //        Just doing this for now because me lazy
 // Maybe I will fix this after having more of an idea on what I'm supposed to go, and just go with it for now
 #[post("/", data = "<form>")]
-async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Status {
+async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error> {
+    // Save file to server
     let filename = form.filename;
     println!("Filename: {}", form.filename);
     match form.file.persist_to(format!("images/{}", filename)).await {
         Ok(_) => (),
         Err(error) => {
             println!("Problem persisting file to system: {:?}", error);
-            return Status::InternalServerError;
+            return Err(error);
         }
     };
 
     // TODO: Allow changing background fill - Enum for background
+    // Convert image
     match ic::convert(format!("images/{}", filename).as_str(), "gray") {
         Ok(_) => (),
         Err(error) => {
@@ -76,21 +79,51 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Status {
                 "Problem converting {} to proper kindle-readable format: {:?}",
                 filename, error
             );
-            return Status::InternalServerError;
+            return Err(error);
         }
     }
-    // TODO: Call functions to convert image and transfer it to the kindle
     let converted_path = format!("converted/{}", filename);
     let converted_image = Path::new(converted_path.as_str());
+
+    // Push file to Kindle and set it
     km::push(converted_image);
-    km::set(filename);
-    Status::Ok
+    if form.set_image {
+        km::set(filename);
+    }
+    let image_names = km::get_image_names();
+    return Ok(pages::oob_swap_server_images(&image_names));
 }
 
 #[post("/set", data = "<image_name>")]
 async fn set(image_name: Form<TextForm>) -> Status {
     km::set(&image_name.text);
     return Status::Ok;
+}
+
+#[delete("/<filename>")]
+async fn delete(filename: &str) -> Result<Markup, io::Error> {
+    match fs::remove_file(format!("converted/{}", filename)) {
+        Ok(_) => (),
+        Err(error) => {
+            println!(
+                "Problem converting {} to proper kindle-readable format: {:?}",
+                filename, error
+            );
+        }
+    }
+
+    match fs::remove_file(format!("images/{}", filename)) {
+        Ok(_) => (),
+        Err(error) => {
+            println!(
+                "Problem converting {} to proper kindle-readable format: {:?}",
+                filename, error
+            );
+        }
+    }
+
+    km::delete_image(&filename);
+    Ok(html!())
 }
 
 // TODO: for some reason is identifying webp as .bin (?)
@@ -127,7 +160,7 @@ fn rocket() -> _ {
         panic!("{error}");
     }
     rocket::build()
-        .mount("/", routes![submit, index, hello, set])
+        .mount("/", routes![submit, index, hello, set, delete])
         .mount("/images/", FileServer::from(relative!("/images")))
         .mount("/converted/", FileServer::from(relative!("/converted")))
         .mount("/static/", FileServer::from(relative!("/static")))
