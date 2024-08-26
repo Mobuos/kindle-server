@@ -59,9 +59,15 @@ fn index() -> Markup {
 // Maybe I will fix this after having more of an idea on what I'm supposed to go, and just go with it for now
 #[post("/", data = "<form>")]
 async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error> {
+    let extension = form
+        .file
+        .content_type()
+        .expect("Failed to get content type")
+        .extension()
+        .expect("Failed to get extension")
+        .to_string();
     // Save file to server
-    let filename = form.filename;
-    println!("Filename: {}", form.filename);
+    let filename = format!("{}.{}", form.filename, extension);
     match form.file.persist_to(format!("images/{}", filename)).await {
         Ok(_) => (),
         Err(error) => {
