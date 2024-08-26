@@ -23,7 +23,7 @@ extern crate rocket;
 // Upload Image Form
 #[derive(Debug, FromForm)]
 struct UploadImage<'v> {
-    #[field(validate = len(1..=20))]
+    #[field(validate = len(0..=20))]
     filename: &'v str,
     set_image: bool,
     // #[field(validate = supported_images())]
@@ -59,6 +59,7 @@ fn index() -> Markup {
 // Maybe I will fix this after having more of an idea on what I'm supposed to go, and just go with it for now
 #[post("/", data = "<form>")]
 async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error> {
+    // Save file to server
     let extension = form
         .file
         .content_type()
@@ -66,8 +67,14 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error
         .extension()
         .expect("Failed to get extension")
         .to_string();
-    // Save file to server
-    let filename = format!("{}.{}", form.filename, extension);
+    let mut filename = form.filename;
+    if form.filename == "" {
+        filename = form
+            .file
+            .name()
+            .expect("Empty filename, and failed to get filename from upload");
+    }
+    let filename = format!("{}.{}", filename, extension);
     match form.file.persist_to(format!("images/{}", filename)).await {
         Ok(_) => (),
         Err(error) => {
@@ -94,7 +101,7 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error
     // Push file to Kindle and set it
     km::push(converted_image);
     if form.set_image {
-        km::set(filename);
+        km::set(&filename);
     }
     let image_names = km::get_image_names();
     return Ok(pages::oob_swap_server_images(&image_names));

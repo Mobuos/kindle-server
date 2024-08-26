@@ -7,11 +7,11 @@ pub fn main(server_images: &Vec<String>) -> Markup {
         h1 { "Olá mundo" }
 
         form hx-post="/" hx-encoding="multipart/form-data" hx-swap="none" {
-            label for="filename" {"pick a file name:"} br;
-            input type="text" name="filename" placeholder="File name" required;
+            label for="filename" {"pick a file name, without extension:"} br;
+            input type="text" name="filename" placeholder="Leave empty to use uploaded file name";
             br; br;
             label for="file" {"Choose a file"} br;
-            input type="file" id="file" name="file" accept="image/png, image/jpeg";
+            input type="file" id="file" name="file" accept="image/png, image/jpeg" required;
             br; br;
             input type="checkbox" id="set_image" name="set_image";
             label for="set_image" {"Upload and set?"};
