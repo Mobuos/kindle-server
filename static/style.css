@@ -14,6 +14,10 @@ form.htmx-swapping {
     transition: opacity 0.5s ease-out;
 }
 
+form {
+    margin-bottom: 2em;
+}
+
 .image {
     cursor: pointer;
 
@@ -23,7 +27,8 @@ form.htmx-swapping {
     width: auto;
     height: auto;
 
-    margin-right: 10px;
+    margin-right: 1em;
+    margin-bottom: 0.5em;
     border-color: gray;
     border-radius: 13%/10%;
     border-width: 2px 2px 2px 2px;

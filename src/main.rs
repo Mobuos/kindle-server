@@ -3,6 +3,7 @@ use image_converter_wrapper as ic;
 mod kindle_manager_wrapper;
 use kindle_manager_wrapper as km;
 use rocket::Request;
+use templates::pages::oob_force_update_file_count;
 
 use std::path::Path;
 use std::{fs, io};
@@ -67,15 +68,19 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error
         .extension()
         .expect("Failed to get extension")
         .to_string();
-    let mut filename = form.filename;
+    let mut filename = form.filename.to_string();
     if form.filename == "" {
         filename = form
             .file
             .name()
-            .expect("Empty filename, and failed to get filename from upload");
+            .expect("Empty filename, and failed to get filename from upload")
+            .to_string();
     }
-    let filename = format!("{}.{}", filename, extension);
-    match form.file.persist_to(format!("images/{}", filename)).await {
+    match form
+        .file
+        .persist_to(format!("images/{}.{}", filename, extension))
+        .await
+    {
         Ok(_) => (),
         Err(error) => {
             println!("Problem persisting file to system: {:?}", error);
@@ -85,7 +90,10 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error
 
     // TODO: Allow changing background fill - Enum for background
     // Convert image
-    match ic::convert(format!("images/{}", filename).as_str(), "gray") {
+    match ic::convert(
+        format!("images/{}.{}", filename, extension).as_str(),
+        "gray",
+    ) {
         Ok(_) => (),
         Err(error) => {
             println!(
@@ -95,7 +103,7 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error
             return Err(error);
         }
     }
-    let converted_path = format!("converted/{}", filename);
+    let converted_path = format!("converted/{}.png", filename);
     let converted_image = Path::new(converted_path.as_str());
 
     // Push file to Kindle and set it
@@ -130,7 +138,7 @@ async fn delete(filename: &str) -> Result<Markup, io::Error> {
     }
 
     km::delete_image(&filename);
-    Ok(html!())
+    Ok(oob_force_update_file_count())
 }
 
 // TODO: for some reason is identifying webp as .bin (?)

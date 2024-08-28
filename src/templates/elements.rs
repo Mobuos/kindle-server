@@ -51,7 +51,7 @@ pub fn show_image(image_name: &str) -> Markup {
                 hx-post="/set"
                 hx-vals={"{{\"image_name\": "(image_name)"}}"}
                 hx-trigger="click";
-            button hx-delete={"/"(image_name)} hx-target="closest form" hx-swap="outerHTML swap:0.5s" { "Deletar" }
+            button .delete hx-delete={"/"(image_name)} hx-target="closest form" hx-swap="outerHTML swap:0.5s" { "Deletar" }
         }
     }
 }

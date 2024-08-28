@@ -54,6 +54,12 @@ pub fn oob_swap_server_images(server_images: &Vec<String>) -> Markup {
                 (elements::show_image(image_name))
             }
         }
+        (oob_force_update_file_count())
+    }
+}
+
+pub fn oob_force_update_file_count() -> Markup {
+    html! {
         li #filecount hx-swap-oob="outerHTML" hx-get="/stats/files" hx-trigger="load, click, updateImage from:body" {
             "Checking File Count.."
         }
