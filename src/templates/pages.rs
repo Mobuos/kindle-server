@@ -5,16 +5,16 @@ use super::elements;
 pub fn main(server_images: &Vec<String>) -> Markup {
     let content = html! {
         form hx-post="/" hx-encoding="multipart/form-data" hx-swap="none" {
-            label for="filename" {"pick a file name, without extension:"} br;
-            input type="text" name="filename" placeholder="Leave empty to use uploaded file name";
-            br; br;
-            label for="file" {"Choose a file"} br;
+            label for="filename" {"File name:"} br;
+            input type="text" name="filename" placeholder="crab_image";
+            br;
+            label for="file" {"Choose a file:"} br;
             input type="file" id="file" name="file" accept="image/png, image/jpeg" required;
-            br; br;
+            br;
             input type="checkbox" id="set_image" name="set_image";
-            label for="set_image" {"Upload and set?"};
-            br; br;
-            button type="submit" {"Submit"}
+            label for="set_image" {"Set image after upload?"};
+            br;
+            button type="submit" {"Upload"}
         }
 
         #server-images {
