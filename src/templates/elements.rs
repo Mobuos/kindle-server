@@ -8,8 +8,12 @@ pub fn nav() -> Markup {
             }
             nav {
                 ul {
-                    li { "Battery: 100%" }
-                    li { "Server / Kindle files: 10/10"}
+                    li hx-get="/stats/battery" hx-trigger="load, click, every 1m" {
+                        "Checking Battery.."
+                    }
+                    li #filecount hx-get="/stats/files" hx-trigger="load, click, updateImage from:body" {
+                        "Checking File Count.."
+                    }
                     li { button { "Sync" } }
                 }
             }

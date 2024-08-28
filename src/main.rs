@@ -118,20 +118,14 @@ async fn delete(filename: &str) -> Result<Markup, io::Error> {
     match fs::remove_file(format!("converted/{}", filename)) {
         Ok(_) => (),
         Err(error) => {
-            println!(
-                "Problem converting {} to proper kindle-readable format: {:?}",
-                filename, error
-            );
+            println!("Problem removing {}: {:?}", filename, error);
         }
     }
 
     match fs::remove_file(format!("images/{}", filename)) {
         Ok(_) => (),
         Err(error) => {
-            println!(
-                "Problem converting {} to proper kindle-readable format: {:?}",
-                filename, error
-            );
+            println!("Problem removing {}: {:?}", filename, error);
         }
     }
 
@@ -160,6 +154,20 @@ async fn delete(filename: &str) -> Result<Markup, io::Error> {
 //     Err(Error::validation(msg))?
 // }
 
+// Route /stats
+#[get("/battery")]
+async fn stats_battery() -> Markup {
+    let battery = km::get_battery();
+    html! { "Battery: " (battery) }
+}
+
+#[get("/files")]
+async fn stats_files() -> Markup {
+    let count_kindle = km::get_image_names().len();
+    let count_server = fs::read_dir("converted").unwrap().count();
+    html! { "Kindle/Server files: " (count_kindle)"/"(count_server)}
+}
+
 fn setup() -> std::io::Result<()> {
     // Create necessary dirs
     fs::create_dir_all("images/tmp")?;
@@ -174,6 +182,7 @@ fn rocket() -> _ {
     }
     rocket::build()
         .mount("/", routes![submit, index, hello, set, delete])
+        .mount("/stats", routes![stats_battery, stats_files])
         .mount("/images/", FileServer::from(relative!("/images")))
         .mount("/converted/", FileServer::from(relative!("/converted")))
         .mount("/static/", FileServer::from(relative!("/static")))

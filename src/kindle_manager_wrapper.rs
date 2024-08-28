@@ -10,6 +10,7 @@ trait CheckStatus {
     fn check_status(self) -> Self;
 }
 
+// In case of failure, print stdout and stderr
 impl CheckStatus for Output {
     fn check_status(self) -> Self {
         if !self.status.success() {
@@ -118,4 +119,16 @@ pub fn delete_image(filename: &str) {
     } else {
         println!("File {} not found!", filename);
     }
+}
+
+pub fn get_battery() -> String {
+    let output = Command::new("bash")
+        .arg("./kindle-manager.sh")
+        .arg("-a")
+        .arg("kindle")
+        .arg("--battery")
+        .output()
+        .expect("Failed to get battery info from Kindle");
+
+    String::from_utf8(output.stdout).unwrap()
 }
