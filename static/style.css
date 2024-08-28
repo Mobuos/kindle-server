@@ -1,3 +1,8 @@
+body {
+    font-family: Helvetica;
+    margin: .5em;
+  }
+
 #server-images {
     margin-top: 10px;
     display: flex;
@@ -24,4 +29,46 @@ form.htmx-swapping {
     border-width: 2px 2px 2px 2px;
     border-style: solid;
     background-color: gray;
+}
+
+.content {
+    margin: 1.5em 1em;
+}
+
+header {
+    border-bottom: 1px solid #ccc;
+    padding: .5em 1em;
+    display: flex;
+    justify-content: space-between;
+}
+
+nav ul, nav li {
+    margin: 0;
+    padding: 0;
+}
+
+nav li {
+    display: inline-block;
+    margin: 1.4em 1em 1em 1em;
+}
+
+input {
+    padding: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+button {
+    padding: 10px 20px;
+    background-color: #202020;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+button:hover {
+background-color: #111111;
 }

@@ -4,8 +4,6 @@ use super::elements;
 
 pub fn main(server_images: &Vec<String>) -> Markup {
     let content = html! {
-        h1 { "Olá mundo" }
-
         form hx-post="/" hx-encoding="multipart/form-data" hx-swap="none" {
             label for="filename" {"pick a file name, without extension:"} br;
             input type="text" name="filename" placeholder="Leave empty to use uploaded file name";

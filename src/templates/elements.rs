@@ -2,7 +2,18 @@ use maud::{html, Markup, PreEscaped, DOCTYPE};
 
 pub fn nav() -> Markup {
     html! {
-        a href="/hello/Unknow" {"Hello"} "|" a href="/about" {"About"}
+        header {
+            .logo {
+                h1 { "Kindle Server" }
+            }
+            nav {
+                ul {
+                    li { "Battery: 100%" }
+                    li { "Server / Kindle files: 10/10"}
+                    li { button { "Sync" } }
+                }
+            }
+        }
     }
 }
 
@@ -19,9 +30,9 @@ pub fn base(title: &str, content: Markup) -> Markup {
         }
         body {
             (nav())
-            (content) br;
+            .content {(content)}
             footer {
-                a href="/" { "Home" }
+                // TODO
             }
         }
     }
@@ -40,3 +51,9 @@ pub fn show_image(image_name: &str) -> Markup {
         }
     }
 }
+
+// pub fn battery(percentage: &str) -> Markup {
+//     html! {
+
+//     }
+// }
