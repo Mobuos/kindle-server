@@ -16,6 +16,7 @@ Available options:
 -a, --address   Defines address of kindle device, to be used in ssh
 -d, --delete    Deletes a given file
 -p, --push      Pushes a given file
+--pull          Pulls a given file, to a given target directory
 -s, --set       Clears and sets an image on the kindle to display
 -g, --get-all   Gets all file names on kindle
 -b, --battery   Get current battery
@@ -60,6 +61,10 @@ parse_params() {
     --no-color) NO_COLOR=1 ;;
     -d | --delete) DELETE=1 ;;
     -p | --push) PUSH=1 ;;
+    --pull) PULL=1 
+      pull_file="${2-}"
+      shift
+      ;;
     -g | --get-all) GET_ALL=1 ;;
     -s | --set) SET=1 ;;
     -b | --battery) BATTERY=1 ;;
@@ -88,6 +93,16 @@ parse_params() {
     [[ ${#args[@]} -eq 0 ]] && die "Missing file name - Required for delete, push and set"
     file=${args[0]}
     filename=$(basename "${file}")
+  fi
+
+  if [[ -n ${PULL-} ]] ; then
+    # If no target directory was specified, use current directory
+    if [[ ${#args[@]} -eq 0 ]] ; then
+      target="."
+    else
+      target=${args[0]}
+    fi
+    filename=$(basename "${pull_file}")
   fi
 
   return 0
@@ -124,4 +139,9 @@ elif [[ -n ${BATTERY-} ]]; then
 
 elif [[ -n ${PREP-} ]]; then
   ssh ${address} "lipc-set-prop -i com.lab126.powerd preventScreenSaver 1 && stop framework && stop powerd" && msg "Finished"
+
+elif [[ -n ${PULL-} ]]; then
+  ssh ${address} "! [ -f ${location}/${filename} ]" && die "${RED}Error: ${NOFORMAT}${filename} wasn't found on the kindle"
+  msg "${BLUE}> Pulling ${filename}${NOFORMAT}"
+  scp ${address}:${location}/${filename} ${target}/${filename}
 fi
