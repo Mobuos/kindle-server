@@ -2,10 +2,12 @@ mod image_converter_wrapper;
 use image_converter_wrapper as ic;
 mod kindle_manager_wrapper;
 use kindle_manager_wrapper as km;
-use rocket::Request;
+use rocket::{Request, State};
 use templates::pages::oob_force_update_file_count;
 
+use std::collections::HashSet;
 use std::path::Path;
+use std::sync::Mutex;
 use std::{fs, io};
 
 use rocket::form::Form;
@@ -20,6 +22,12 @@ use templates::{errors, pages};
 
 #[macro_use]
 extern crate rocket;
+
+// Images on the Server
+#[derive(Debug)]
+struct ServerImages {
+    images: Mutex<HashSet<String>>,
+}
 
 // Upload Image Form
 #[derive(Debug, FromForm)]
@@ -37,10 +45,25 @@ struct TextForm {
     text: String,
 }
 
+fn get_server_images() -> impl Iterator<Item = String> {
+    fs::read_dir("converted")
+        .expect("\"converted\" directory not found!")
+        .filter_map(|entry| entry.ok())
+        .map(|entry| {
+            entry
+                .file_name()
+                .to_str()
+                .expect("Invalid filename")
+                .to_owned()
+        })
+}
+
 #[catch(404)]
 fn not_found(req: &Request<'_>) -> Markup {
     errors::e404(&req.uri().to_string())
 }
+
+// TODO: Organize the code
 
 #[get("/hello/<name>")]
 fn hello(name: &str) -> Markup {
@@ -59,7 +82,10 @@ fn index() -> Markup {
 //        Just doing this for now because me lazy
 // Maybe I will fix this after having more of an idea on what I'm supposed to go, and just go with it for now
 #[post("/", data = "<form>")]
-async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error> {
+async fn submit<'r>(
+    mut form: Form<UploadImage<'r>>,
+    server_images: &State<ServerImages>,
+) -> Result<Markup, io::Error> {
     // Save file to server
     let extension = form
         .file
@@ -76,11 +102,8 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error
             .expect("Empty filename, and failed to get filename from upload")
             .to_string();
     }
-    match form
-        .file
-        .persist_to(format!("images/{}.{}", filename, extension))
-        .await
-    {
+    let full_filename = format!("{}.{}", filename, extension);
+    match form.file.persist_to(&full_filename).await {
         Ok(_) => (),
         Err(error) => {
             println!("Problem persisting file to system: {:?}", error);
@@ -90,11 +113,14 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error
 
     // TODO: Allow changing background fill - Enum for background
     // Convert image
-    match ic::convert(
-        format!("images/{}.{}", filename, extension).as_str(),
-        "gray",
-    ) {
-        Ok(_) => (),
+    match ic::convert(&full_filename, "gray") {
+        Ok(_) => {
+            server_images
+                .images
+                .lock()
+                .unwrap()
+                .insert(format!("{}.{}", filename, extension));
+        }
         Err(error) => {
             println!(
                 "Problem converting {} to proper kindle-readable format: {:?}",
@@ -109,7 +135,7 @@ async fn submit<'r>(mut form: Form<UploadImage<'r>>) -> Result<Markup, io::Error
     // Push file to Kindle and set it
     km::push(converted_image);
     if form.set_image {
-        km::set(&filename);
+        km::set(&full_filename);
     }
     let image_names = km::get_image_names();
     return Ok(pages::oob_swap_server_images(&image_names));
@@ -121,10 +147,35 @@ async fn set(image_name: Form<TextForm>) -> Status {
     return Status::Ok;
 }
 
+#[post("/sync")]
+async fn sync(server_images: &State<ServerImages>) -> Result<Status, io::Error> {
+    let kindle_images: HashSet<String> = HashSet::from_iter(km::get_image_names());
+
+    // Check for images on the Kindle that aren't on the server
+    for k_image in &kindle_images {
+        if !server_images.images.lock().unwrap().contains(k_image) {
+            km::pull(k_image, Path::new("converted/"));
+            println!("Missing {} in the server", k_image);
+        }
+    }
+
+    // Check for images on the server that aren't on the kindle
+    for s_image in server_images.images.lock().unwrap().iter() {
+        if !kindle_images.contains(s_image) {
+            km::push(Path::new(&format!("converted/{}", s_image)));
+            println!("Missing {} in the kindle", s_image);
+        }
+    }
+
+    return Ok(Status::Ok);
+}
+
 #[delete("/<filename>")]
-async fn delete(filename: &str) -> Result<Markup, io::Error> {
+async fn delete(filename: &str, server_images: &State<ServerImages>) -> Result<Markup, io::Error> {
     match fs::remove_file(format!("converted/{}", filename)) {
-        Ok(_) => (),
+        Ok(_) => {
+            server_images.images.lock().unwrap().remove(filename);
+        }
         Err(error) => {
             println!("Problem removing {}: {:?}", filename, error);
         }
@@ -180,6 +231,7 @@ fn setup() -> std::io::Result<()> {
     // Create necessary dirs
     fs::create_dir_all("images/tmp")?;
     fs::create_dir_all("converted")?;
+
     Ok(())
 }
 
@@ -189,7 +241,10 @@ fn rocket() -> _ {
         panic!("{error}");
     }
     rocket::build()
-        .mount("/", routes![submit, index, hello, set, delete])
+        .manage(ServerImages {
+            images: Mutex::new(HashSet::from_iter(get_server_images())),
+        })
+        .mount("/", routes![submit, index, hello, set, delete, sync])
         .mount("/stats", routes![stats_battery, stats_files])
         .mount("/images/", FileServer::from(relative!("/images")))
         .mount("/converted/", FileServer::from(relative!("/converted")))
