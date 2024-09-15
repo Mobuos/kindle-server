@@ -148,16 +148,9 @@ async fn set(image_name: Form<TextForm>) -> Status {
 }
 
 #[post("/sync")]
-async fn sync(server_images: &State<ServerImages>) -> Result<Status, io::Error> {
-    let kindle_images: HashSet<String> = HashSet::from_iter(km::get_image_names());
-
-    // Check for images on the Kindle that aren't on the server
-    for k_image in &kindle_images {
-        if !server_images.images.lock().unwrap().contains(k_image) {
-            km::pull(k_image, Path::new("converted/"));
-            println!("Missing {} in the server", k_image);
-        }
-    }
+async fn sync(server_images: &State<ServerImages>) -> Result<Markup, io::Error> {
+    let image_names = km::get_image_names();
+    let kindle_images: HashSet<String> = HashSet::from_iter(image_names);
 
     // Check for images on the server that aren't on the kindle
     for s_image in server_images.images.lock().unwrap().iter() {
@@ -167,7 +160,17 @@ async fn sync(server_images: &State<ServerImages>) -> Result<Status, io::Error> 
         }
     }
 
-    return Ok(Status::Ok);
+    // Check for images on the Kindle that aren't on the server
+    for k_image in &kindle_images {
+        if !server_images.images.lock().unwrap().contains(k_image) {
+            km::pull(k_image, Path::new("converted/"));
+            println!("Missing {} in the server", k_image);
+        }
+    }
+
+    // Check kindle again for updated images
+    let image_names = km::get_image_names();
+    return Ok(pages::oob_swap_server_images(&image_names));
 }
 
 #[delete("/<filename>")]

@@ -14,8 +14,11 @@ pub fn nav() -> Markup {
                     li #filecount hx-get="/stats/files" hx-trigger="load, click, updateImage from:body" {
                         "Checking File Count.."
                     }
-                    li hx-post="/sync" hx-swap="none" {
-                        button { "Sync" }
+                    li hx-post="/sync" hx-swap="none" hx-indicator=".sync" {
+                        button {
+                            div .sync #sync-text { "Sync" }
+                            img .sync #sync-loading width="16px" src="/static/resources/pulse-rings-2.svg";
+                        }
                     }
                 }
             }
@@ -53,6 +56,7 @@ pub fn show_image(image_name: &str) -> Markup {
                 hx-post="/set"
                 hx-vals={"{{\"image_name\": "(image_name)"}}"}
                 hx-trigger="click";
+            p { (image_name) }
             button .delete hx-delete={"/"(image_name)} hx-target="closest form" hx-swap="outerHTML swap:0.5s" { "Delete" }
         }
     }

@@ -1,7 +1,7 @@
 body {
     font-family: Helvetica;
     margin: .5em;
-  }
+}
 
 #server-images {
     margin-top: 10px;
@@ -72,8 +72,29 @@ button {
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.3s ease;
+
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
   }
 
 button:hover {
-background-color: #111111;
+    background-color: #111111;
+}
+
+/* Loading */
+#sync-text {
+    display: inline;
+}
+
+#sync-text.htmx-request{
+    display: none;
+}
+
+#sync-loading {
+    display: none;
+}
+
+#sync-loading.htmx-request{
+    display: inline;
 }
