@@ -1,8 +1,10 @@
-# kindle-server
+# Kindle Server
 
-this project aims to be a simple web ui for displaying images on a jailbroken kindle
+This a small project that aims to provide a simple web UI for displaying and managing images on a jailbroken Kindle.
 
-This is how I run the docker container:
+> This is a work in progress
+
+Here's how I run the docker container:
 
 ```bash
 docker build . -t kindle_server
