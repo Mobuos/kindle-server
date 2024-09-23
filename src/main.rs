@@ -23,6 +23,11 @@ use templates::{errors, pages};
 #[macro_use]
 extern crate rocket;
 
+#[catch(404)]
+fn not_found(req: &Request<'_>) -> Markup {
+    errors::e404(&req.uri().to_string())
+}
+
 // Images on the Server
 #[derive(Debug)]
 struct ServerImages {
@@ -58,21 +63,14 @@ fn get_server_images() -> impl Iterator<Item = String> {
         })
 }
 
-#[catch(404)]
-fn not_found(req: &Request<'_>) -> Markup {
-    errors::e404(&req.uri().to_string())
-}
+// ------- Routes ---------- //
 
-// TODO: Organize code
 #[get("/")]
 fn index() -> Markup {
     let image_names = km::get_image_names();
     pages::main(&image_names)
 }
 
-// FIXME: Returning Status directly is not recommended, see https://rocket.rs/guide/v0.5/responses/#responses
-//        Just doing this for now because me lazy
-// Maybe I will fix this after having more of an idea on what I'm supposed to go, and just go with it for now
 #[post("/", data = "<form>")]
 async fn submit<'r>(
     mut form: Form<UploadImage<'r>>,
@@ -221,6 +219,8 @@ async fn stats_files() -> Markup {
     let count_server = fs::read_dir("converted").unwrap().count();
     html! { "Kindle/Server files: " (count_kindle)"/"(count_server)}
 }
+
+// ------ Rocket Setup --------- //
 
 fn setup() -> std::io::Result<()> {
     // Create necessary dirs
