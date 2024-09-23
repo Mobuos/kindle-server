@@ -66,13 +66,13 @@ fn get_server_images() -> impl Iterator<Item = String> {
 // ------- Routes ---------- //
 
 #[get("/")]
-fn index() -> Markup {
+fn view_index() -> Markup {
     let image_names = km::get_image_names();
     pages::main(&image_names)
 }
 
 #[post("/", data = "<form>")]
-async fn submit<'r>(
+async fn submit_image_form<'r>(
     mut form: Form<UploadImage<'r>>,
     server_images: &State<ServerImages>,
 ) -> Result<Markup, io::Error> {
@@ -132,7 +132,7 @@ async fn submit<'r>(
 }
 
 #[post("/set", data = "<image_name>")]
-async fn set(image_name: Form<TextForm>) -> Status {
+async fn set_image(image_name: Form<TextForm>) -> Status {
     km::set(&image_name.text);
     return Status::Ok;
 }
@@ -164,7 +164,10 @@ async fn sync(server_images: &State<ServerImages>) -> Result<Markup, io::Error> 
 }
 
 #[delete("/<filename>")]
-async fn delete(filename: &str, server_images: &State<ServerImages>) -> Result<Markup, io::Error> {
+async fn delete_image(
+    filename: &str,
+    server_images: &State<ServerImages>,
+) -> Result<Markup, io::Error> {
     match fs::remove_file(format!("converted/{}", filename)) {
         Ok(_) => {
             server_images.images.lock().unwrap().remove(filename);
@@ -222,7 +225,7 @@ async fn stats_files() -> Markup {
 
 // ------ Rocket Setup --------- //
 
-fn setup() -> std::io::Result<()> {
+fn setup_rocket() -> std::io::Result<()> {
     // Create necessary dirs
     fs::create_dir_all("images/tmp")?;
     fs::create_dir_all("converted")?;
@@ -232,17 +235,24 @@ fn setup() -> std::io::Result<()> {
 
 #[launch]
 fn rocket() -> _ {
-    if let Err(error) = setup() {
+    if let Err(error) = setup_rocket() {
         panic!("{error}");
     }
     rocket::build()
+        // State
         .manage(ServerImages {
             images: Mutex::new(HashSet::from_iter(get_server_images())),
         })
-        .mount("/", routes![submit, index, set, delete, sync])
+        // Routes
+        .mount(
+            "/",
+            routes![submit_image_form, view_index, set_image, delete_image, sync],
+        )
         .mount("/stats", routes![stats_battery, stats_files])
+        // Static files
         .mount("/images/", FileServer::from(relative!("/images")))
         .mount("/converted/", FileServer::from(relative!("/converted")))
         .mount("/static/", FileServer::from(relative!("/static")))
+        // Catchers
         .register("/", catchers![not_found])
 }
