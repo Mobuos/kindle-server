@@ -18,8 +18,12 @@ pub fn main(server_images: &Vec<String>) -> Markup {
         }
 
         #server-images {
-            @for image_name in server_images {
-                (elements::show_image(image_name))
+            @if server_images.is_empty() {
+                p { "No images found on the Kindle!" }
+            } @else {
+                @for image_name in server_images {
+                    (elements::show_image(image_name))
+                }
             }
         }
     };
