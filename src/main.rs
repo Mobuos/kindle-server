@@ -63,15 +63,7 @@ fn not_found(req: &Request<'_>) -> Markup {
     errors::e404(&req.uri().to_string())
 }
 
-// TODO: Organize the code
-
-#[get("/hello/<name>")]
-fn hello(name: &str) -> Markup {
-    let title = "Hello";
-    let items = vec!["One", "Two", "Three"];
-    pages::hello(title, name, items)
-}
-
+// TODO: Organize code
 #[get("/")]
 fn index() -> Markup {
     let image_names = km::get_image_names();
@@ -247,7 +239,7 @@ fn rocket() -> _ {
         .manage(ServerImages {
             images: Mutex::new(HashSet::from_iter(get_server_images())),
         })
-        .mount("/", routes![submit, index, hello, set, delete, sync])
+        .mount("/", routes![submit, index, set, delete, sync])
         .mount("/stats", routes![stats_battery, stats_files])
         .mount("/images/", FileServer::from(relative!("/images")))
         .mount("/converted/", FileServer::from(relative!("/converted")))

@@ -26,21 +26,6 @@ pub fn main(server_images: &Vec<String>) -> Markup {
     elements::base("Main", content)
 }
 
-pub fn hello(title: &str, name: &str, items: Vec<&str>) -> Markup {
-    let content = html! {
-        h1 { "Hi " (name) }
-        h3 { "Here are your items:" }
-        ul {
-            @for item in items {
-                li { (item) }
-            }
-        }
-
-        p { "Try going to " a href="/hello/Your%20Name" { "/hello/Your Name"}}
-    };
-    elements::base(title, content)
-}
-
 // TODO: Send everything everytime?
 // Just appending the image at the end could show a different order upon reload
 // I believe `ls` uses alphabetical order :/
