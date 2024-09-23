@@ -61,9 +61,3 @@ pub fn show_image(image_name: &str) -> Markup {
         }
     }
 }
-
-// pub fn battery(percentage: &str) -> Markup {
-//     html! {
-
-//     }
-// }
