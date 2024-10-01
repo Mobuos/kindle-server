@@ -2,7 +2,7 @@ mod image_converter_wrapper;
 use image_converter_wrapper as ic;
 mod kindle_manager_wrapper;
 use kindle_manager_wrapper as km;
-use rocket::{Request, State};
+use rocket::{form, Request, State};
 use templates::pages::oob_force_update_file_count;
 
 use std::collections::HashSet;
@@ -11,7 +11,7 @@ use std::sync::Mutex;
 use std::{fs, io};
 
 use rocket::form::Form;
-use rocket::fs::{relative, FileServer, TempFile};
+use rocket::fs::{relative, FileName, FileServer, TempFile};
 use rocket::http::Status;
 
 use maud::{html, Markup};
@@ -38,6 +38,7 @@ struct ServerImages {
 #[derive(Debug, FromForm)]
 struct UploadImage<'v> {
     #[field(validate = len(0..=20))]
+    #[field(validate = valid_filename())]
     filename: &'v str,
     set_image: bool,
     // #[field(validate = supported_images())]
@@ -62,6 +63,37 @@ fn get_server_images() -> impl Iterator<Item = String> {
                 .to_owned()
         })
 }
+
+// ------- Validation --------- //
+
+fn valid_filename<'v>(filename: &str) -> form::Result<'v, ()> {
+    let filename = FileName::new(filename);
+    if !filename.is_safe() {
+        Err(form::Error::validation("invalid filename"))?;
+    }
+    Ok(())
+}
+
+// TODO: for some reason is identifying webp as .bin (?)
+// fn supported_images<'v>(file: &TempFile<'_>) -> Result<(), Errors<'v>> {
+//     if let Some(file_ct) = file.content_type() {
+//         TODO: Doesn't let me use match here (?)
+//         if file_ct == &ContentType::PNG
+//             || file_ct == &ContentType::JPEG
+//             || file_ct == &ContentType::WEBP
+//             || file_ct == &ContentType::BMP
+//         {
+//             return Ok(());
+//         }
+//     }
+
+//     let msg = match file.content_type().and_then(|c| c.extension()) {
+//         Some(a) => format!("invalid file type: .{}, must be PNG, JPEG or WEBP", a),
+//         None => format!("file type must be PNG, JPEG or WEBP"),
+//     };
+
+//     Err(Error::validation(msg))?
+// }
 
 // ------- Routes ---------- //
 
@@ -93,7 +125,11 @@ async fn submit_image_form<'r>(
             .to_string();
     }
     let full_filename = format!("{}.{}", filename, extension);
-    match form.file.persist_to(&full_filename).await {
+    match form
+        .file
+        .persist_to(format!("images/{}", full_filename))
+        .await
+    {
         Ok(_) => (),
         Err(error) => {
             println!("Problem persisting file to system: {:?}", error);
@@ -103,7 +139,7 @@ async fn submit_image_form<'r>(
 
     // TODO: Allow changing background fill - Enum for background
     // Convert image
-    match ic::convert(&full_filename, "gray") {
+    match ic::convert(&format!("images/{}", full_filename), "gray") {
         Ok(_) => {
             server_images
                 .images
@@ -187,27 +223,6 @@ async fn delete_image(
     km::delete_image(&filename);
     Ok(oob_force_update_file_count())
 }
-
-// TODO: for some reason is identifying webp as .bin (?)
-// fn supported_images<'v>(file: &TempFile<'_>) -> Result<(), Errors<'v>> {
-//     if let Some(file_ct) = file.content_type() {
-//         TODO: Doesn't let me use match here (?)
-//         if file_ct == &ContentType::PNG
-//             || file_ct == &ContentType::JPEG
-//             || file_ct == &ContentType::WEBP
-//             || file_ct == &ContentType::BMP
-//         {
-//             return Ok(());
-//         }
-//     }
-
-//     let msg = match file.content_type().and_then(|c| c.extension()) {
-//         Some(a) => format!("invalid file type: .{}, must be PNG, JPEG or WEBP", a),
-//         None => format!("file type must be PNG, JPEG or WEBP"),
-//     };
-
-//     Err(Error::validation(msg))?
-// }
 
 // Route /stats
 #[get("/battery")]
