@@ -116,14 +116,19 @@ async fn submit_image_form<'r>(
         .extension()
         .expect("Failed to get extension")
         .to_string();
-    let mut filename = form.filename.to_string();
-    if form.filename == "" {
-        filename = form
-            .file
-            .name()
-            .expect("Empty filename, and failed to get filename from upload")
-            .to_string();
-    }
+
+    // Filename should already be checked by form validation, but this guarantees that
+    // the filename used is valid.
+    // TODO: Check for repeated filenames
+    let filename = FileName::new(form.filename)
+        .as_str()
+        .unwrap_or_else(|| {
+            form.file
+                .name()
+                .expect("Invalid filename and failed to get filename from upload")
+        })
+        .to_string();
+
     let full_filename = format!("{}.{}", filename, extension);
     match form
         .file
