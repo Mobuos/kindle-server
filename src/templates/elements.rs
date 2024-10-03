@@ -47,17 +47,20 @@ pub fn base(title: &str, content: Markup) -> Markup {
     }
 }
 
-pub fn show_image(image_name: &str) -> Markup {
+pub fn show_image(filename: &str) -> Markup {
+    let image_name = filename.split(".").next().unwrap_or(filename);
     html! {
         form {
-            input type="hidden" name="text" value=(image_name);
-            img .image src={"converted/"(image_name)}
+            input type="hidden" name="text" value=(filename);
+            img .image src={"converted/"(filename)}
                 onerror="this.onerror=null; this.src='static/resources/notfound.png'"
                 hx-post="/set"
-                hx-vals={"{{\"image_name\": "(image_name)"}}"}
+                hx-vals={"{{\"image_name\": "(filename)"}}"}
                 hx-trigger="click";
             p { (image_name) }
-            button .delete hx-delete={"/"(image_name)} hx-target="closest form" hx-swap="outerHTML swap:0.5s" { "Delete" }
+            // TODO: Delete should give the image_name without extension, server side deletes all images
+            // with this name no matter the extension (Is this dangerous?)
+            button .delete hx-delete={"/"(filename)} hx-target="closest form" hx-swap="outerHTML swap:0.5s" { "Delete" }
         }
     }
 }

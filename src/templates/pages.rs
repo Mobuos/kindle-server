@@ -21,8 +21,8 @@ pub fn main(server_images: &Vec<String>) -> Markup {
             @if server_images.is_empty() {
                 p { "No images found on the Kindle!" }
             } @else {
-                @for image_name in server_images {
-                    (elements::show_image(image_name))
+                @for filename in server_images {
+                    (elements::show_image(filename))
                 }
             }
         }
@@ -39,8 +39,8 @@ pub fn main(server_images: &Vec<String>) -> Markup {
 pub fn oob_swap_server_images(server_images: &Vec<String>) -> Markup {
     html! {
         #server-images hx-swap-oob="innerHTML" {
-            @for image_name in server_images {
-                (elements::show_image(image_name))
+            @for filename in server_images {
+                (elements::show_image(filename))
             }
         }
         (oob_force_update_file_count())

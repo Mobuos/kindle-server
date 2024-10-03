@@ -99,8 +99,8 @@ fn valid_filename<'v>(filename: &str) -> form::Result<'v, ()> {
 
 #[get("/")]
 fn view_index() -> Markup {
-    let image_names = km::get_image_names();
-    pages::main(&image_names)
+    let filenames = km::get_filenames();
+    pages::main(&filenames)
 }
 
 #[post("/", data = "<form>")]
@@ -168,7 +168,7 @@ async fn submit_image_form<'r>(
     if form.set_image {
         km::set(&full_filename);
     }
-    let image_names = km::get_image_names();
+    let image_names = km::get_filenames();
     return Ok(pages::oob_swap_server_images(&image_names));
 }
 
@@ -180,7 +180,7 @@ async fn set_image(image_name: Form<TextForm>) -> Status {
 
 #[post("/sync")]
 async fn sync(server_images: &State<ServerImages>) -> Result<Markup, io::Error> {
-    let image_names = km::get_image_names();
+    let image_names = km::get_filenames();
     let kindle_images: HashSet<String> = HashSet::from_iter(image_names);
 
     // Check for images on the server that aren't on the kindle
@@ -200,7 +200,7 @@ async fn sync(server_images: &State<ServerImages>) -> Result<Markup, io::Error> 
     }
 
     // Check kindle again for updated images
-    let image_names = km::get_image_names();
+    let image_names = km::get_filenames();
     return Ok(pages::oob_swap_server_images(&image_names));
 }
 
@@ -238,7 +238,7 @@ async fn stats_battery() -> Markup {
 
 #[get("/files")]
 async fn stats_files() -> Markup {
-    let count_kindle = km::get_image_names().len();
+    let count_kindle = km::get_filenames().len();
     let count_server = fs::read_dir("converted").unwrap().count();
     html! { "Kindle/Server files: " (count_kindle)"/"(count_server)}
 }

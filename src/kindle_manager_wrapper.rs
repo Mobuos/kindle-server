@@ -107,7 +107,7 @@ pub fn set(filename: &str) {
     }
 }
 
-pub fn get_image_names() -> Vec<String> {
+pub fn get_filenames() -> Vec<String> {
     let output = Command::new("bash")
         .arg("./kindle-manager.sh")
         .arg("-a")
