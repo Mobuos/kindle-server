@@ -160,13 +160,14 @@ async fn submit_image_form<'r>(
             return Err(error);
         }
     }
-    let converted_path = format!("converted/{}.png", filename);
+    let converted_filename = format!("{}.png", filename);
+    let converted_path = format!("converted/{}", converted_filename);
     let converted_image = Path::new(converted_path.as_str());
 
     // Push file to Kindle and set it
     km::push(converted_image);
     if form.set_image {
-        km::set(&full_filename);
+        km::set(&converted_filename);
     }
     let image_names = km::get_filenames();
     return Ok(pages::oob_swap_server_images(&image_names));
