@@ -144,13 +144,14 @@ async fn submit_image_form<'r>(
 
     // TODO: Allow changing background fill - Enum for background
     // Convert image
+    let converted_filename = format!("{}.png", filename);
     match ic::convert(&format!("images/{}", full_filename), "gray") {
         Ok(_) => {
             server_images
                 .images
                 .lock()
                 .unwrap()
-                .insert(format!("{}.{}", filename, extension));
+                .insert(format!("{}", converted_filename));
         }
         Err(error) => {
             println!(
@@ -160,7 +161,6 @@ async fn submit_image_form<'r>(
             return Err(error);
         }
     }
-    let converted_filename = format!("{}.png", filename);
     let converted_path = format!("converted/{}", converted_filename);
     let converted_image = Path::new(converted_path.as_str());
 
