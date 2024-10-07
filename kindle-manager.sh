@@ -120,19 +120,19 @@ if [[ -n ${GET_ALL-} ]]; then
   ssh ${address} "ls ${location}"
 
 elif [[ -n ${PUSH-} ]]; then
-  ssh ${address} "[ -f ${location}/${filename} ]" && die "${RED}Error: ${NOFORMAT}${filename} already exists on kindle"
-  msg "${BLUE}> Pushing ${filename}${NOFORMAT}"
-  scp ${file} ${address}:${location}/${filename} && msg "Success"
+  ssh "$address" "[ -f \"$location"/"$filename\" ]" && die "${RED}Error: ${NOFORMAT}\"$filename\" already exists on kindle"
+  msg "${BLUE}> Pushing $filename${NOFORMAT}"
+  scp "$file" "$address":"$location"/"$filename" && msg "Success"
 
 elif [[ -n ${DELETE-} ]]; then
-  ssh ${address} "! [ -f ${location}/${filename} ]" && die "${RED}Error: ${NOFORMAT}Could not find ${filename} on kindle"
-  msg "${BLUE}> Deleting ${filename}${NOFORMAT}"
-  ssh ${address} "rm ${location}/${filename}" && msg "Success"
+  ssh $address "! [ -f \"$location"/"$filename\" ]" && die "${RED}Error: ${NOFORMAT}Could not find \"$filename\" on kindle"
+  msg "${BLUE}> Deleting \"$filename\"${NOFORMAT}"
+  ssh ${address} "rm \"$location\"/\"$filename\"" && msg "Success"
 
 elif [[ -n ${SET-} ]]; then
-  ssh ${address} "! [ -f ${location}/${filename} ]" && die "${RED}Error: ${NOFORMAT}Could not find ${filename} on kindle"
-  msg "${BLUE}> Setting ${filename}${NOFORMAT}"
-  ssh ${address} "eips -c; eips -f; eips -g ${location}/${filename}"
+  ssh $address "! [ -f \"$location"/"$filename\" ]" && die "${RED}Error: ${NOFORMAT}Could not find \"$filename\" on kindle"
+  msg "${BLUE}> Setting \"$filename\"${NOFORMAT}"
+  ssh $address "eips -c; eips -f; eips -g \"$location/$filename\""
 
 elif [[ -n ${BATTERY-} ]]; then
   ssh ${address} "gasgauge-info -c"
@@ -141,7 +141,7 @@ elif [[ -n ${PREP-} ]]; then
   ssh ${address} "lipc-set-prop -i com.lab126.powerd preventScreenSaver 1 && stop framework && stop powerd" && msg "Finished"
 
 elif [[ -n ${PULL-} ]]; then
-  ssh ${address} "! [ -f ${location}/${filename} ]" && die "${RED}Error: ${NOFORMAT}${filename} wasn't found on the kindle"
-  msg "${BLUE}> Pulling ${filename}${NOFORMAT}"
-  scp ${address}:${location}/${filename} ${target}/${filename}
+  ssh $address "! [ -f \"$location"/"$filename\" ]" && die "${RED}Error: ${NOFORMAT}\"$filename\" wasn't found on the kindle"
+  msg "${BLUE}> Pulling \"$filename\"${NOFORMAT}"
+  scp "$address":"$location"/"$filename" "$target"/"$filename"
 fi
