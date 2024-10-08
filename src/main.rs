@@ -6,13 +6,14 @@ use rocket::{form, Request, State};
 use templates::pages::oob_force_update_file_count;
 
 use std::collections::HashSet;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 use std::sync::Mutex;
 use std::{fs, io};
 
 use rocket::form::Form;
 use rocket::fs::{relative, FileName, FileServer, TempFile};
-use rocket::http::Status;
+use rocket::http::{ContentType, Status};
 
 use maud::{html, Markup};
 
@@ -109,7 +110,7 @@ async fn submit_image_form<'r>(
     server_images: &State<ServerImages>,
 ) -> Result<Markup, io::Error> {
     // Save file to server
-    let extension = form
+    let og_file_extension = form
         .file
         .content_type()
         .expect("Failed to get content type")
@@ -120,7 +121,7 @@ async fn submit_image_form<'r>(
     // Filename should already be checked by form validation, but this guarantees that
     // the filename used is valid.
     // TODO: Check for repeated filenames
-    let filename = FileName::new(form.filename)
+    let user_filename = FileName::new(form.filename)
         .as_str()
         .unwrap_or_else(|| {
             form.file
@@ -129,7 +130,7 @@ async fn submit_image_form<'r>(
         })
         .to_string();
 
-    let full_filename = format!("{}.{}", filename, extension);
+    let mut full_filename = format!("{}.{}", user_filename, og_file_extension);
     match form
         .file
         .persist_to(format!("images/{}", full_filename))
@@ -142,32 +143,45 @@ async fn submit_image_form<'r>(
         }
     };
 
+    // Convert image to png in the server if it's not a PNG already
+    if form.file.content_type() != Some(&ContentType::PNG) {
+        println!("Submitted image is being converted into a PNG");
+        Command::new("magick")
+            .arg(format!("images/{}", full_filename))
+            .arg(format!("images/{}.png", user_filename))
+            .output()
+            .expect("Failed to convert image to PNG");
+        fs::remove_file(format!("images/{}", full_filename)).expect(&format!(
+            "Failed to delete original file \"{}\"",
+            full_filename
+        ));
+        full_filename = format!("{}.png", user_filename);
+    }
+
     // TODO: Allow changing background fill - Enum for background
-    // Convert image
-    let converted_filename = format!("{}.png", filename);
+    // Convert image to Kindle-appropriate format
     match ic::convert(&format!("images/{}", full_filename), "gray") {
         Ok(_) => {
             server_images
                 .images
                 .lock()
                 .unwrap()
-                .insert(format!("{}", converted_filename));
+                .insert(format!("{}", full_filename));
         }
         Err(error) => {
             println!(
                 "Problem converting {} to proper kindle-readable format: {:?}",
-                filename, error
+                user_filename, error
             );
             return Err(error);
         }
     }
-    let converted_path = format!("converted/{}", converted_filename);
-    let converted_image = Path::new(converted_path.as_str());
+    let converted_image = PathBuf::from(format!("converted/{}", full_filename).as_str());
 
     // Push file to Kindle and set it
-    km::push(converted_image);
+    km::push(&converted_image);
     if form.set_image {
-        km::set(&converted_filename);
+        km::set(&full_filename);
     }
     let image_names = km::get_filenames();
     return Ok(pages::oob_swap_server_images(&image_names));
