@@ -93,7 +93,7 @@ if [[ -f converted/${filename} ]] && [[ -z "${OVERWRITE-}" ]]; then
   die "${RED}Error:${NOFORMAT} Command would overwrite file ${BLUE}converted/${filename}${NOFORMAT}\n   use --overwrite to proceed anyways"
 fi
 
-convert "${file}" -filter LanczosSharp -resize 758x1024 -background ${background-} \
+magick "${file}" -filter LanczosSharp -resize 758x1024 -background ${background-} \
          -gravity center -extent 758x1024 -colorspace Gray -dither FloydSteinberg \
          -remap kindle_colors.gif -quality 75 -define png:color-type=0 \
          -define png:bit-depth=8 "converted/${filename%.*}.png"
