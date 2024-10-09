@@ -6,10 +6,12 @@ pub fn main(server_images: &Vec<String>) -> Markup {
     let content = html! {
         form hx-post="/" hx-encoding="multipart/form-data" hx-swap="none" {
             label for="filename" {"File name:"} br;
-            input type="text" name="filename" placeholder="crab_image";
+            input type="text" id="filename" name="filename" placeholder="crab_image"
+                  oninput="this.userChanged=true";
             br;
             label for="file" {"Choose a file:"} br;
-            input type="file" id="file" name="file" accept="image/png, image/jpeg" required;
+            input type="file" id="file" name="file" accept="image/png, image/jpeg" required
+                  onchange="set_filename_from_upload()";
             br;
             input type="checkbox" id="set_image" name="set_image";
             label for="set_image" {"Set image after upload?"};
