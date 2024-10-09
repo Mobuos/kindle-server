@@ -4,7 +4,7 @@ This a small project that aims to provide a simple web UI for displaying and man
 
 ![Kindle-server](https://github.com/user-attachments/assets/dd1f34be-b210-480e-a45f-a1427c453ae4)
 
-> This is a work in progress
+> Website UI is currently going through a redesign
 
 Here's how I run the docker container:
 
