@@ -6,7 +6,7 @@ pub fn main(server_images: &Vec<String>) -> Markup {
     let content = html! {
         .mx-auto.max-w-5xl.px-4.py-12 {
             form hx-post="/" hx-encoding="multipart/form-data" hx-swap="none"
-                .grid.grid-cols-1.gap-x-6.pb-12 {
+                .grid.grid-cols-1.gap-x-6.gap-y-7.pb-12 {
                     // Choose image and rename
                     div {
                         label for="file" .block.text-sm.font-medium.leading-6.text-gray-900
@@ -31,17 +31,66 @@ pub fn main(server_images: &Vec<String>) -> Markup {
 
                     // Kindle Orientation
                     div {
-                        // TODO
+                        label for="horizontal" .block.text-sm.font-medium.leading-6.text-gray-900.w-fit {
+                            "Kindle Orientation"
+                            // INFO
+                        }
+                        label for="horizontal" .inline-flex."items-center"."mt-2"."gap-0.5".w-full.max-w-md.rounded-md
+                            .cursor-pointer.select-none.bg-white.text-gray-900 {
+                            input #horizontal type="checkbox" value="on" .hidden.peer;
+                            span ."w-1/2".text-center.py-1.rounded-l-md.outline.outline-2.outline-indigo-400.text-indigo-700.font-semibold.bg-indigo-100.z-0
+                                ."peer-checked:outline-gray-300"."peer-checked:bg-transparent"."peer-checked:text-gray-900"
+                                { "Vertical" }
+                            span ."w-1/2".text-center.py-1.rounded-r-md.outline.outline-2.outline-gray-300
+                                ."peer-checked:outline-indigo-400"."peer-checked:z-0"."peer-checked:text-indigo-700"."peer-checked:font-semibold"."peer-checked:bg-indigo-100"
+                                { "Horizontal" }
+                        }
                     }
 
-                    // Image adjustments
+                    // Image adjustment
                     div {
-                        // TODO
+                        label for="fit" .block.text-sm.font-medium.leading-6.text-gray-900.w-fit {
+                            "Image Adjustment"
+                            // INFO
+                        }
+                        label for="fit" .inline-flex."items-center"."mt-2"."gap-0.5".w-full.max-w-md.rounded-md
+                            .cursor-pointer.select-none.bg-white.text-gray-900 {
+                            input #fit type="checkbox" value="on" .hidden.peer;
+                            span ."w-1/2".text-center.py-1.rounded-l-md.outline.outline-2.outline-indigo-400.text-indigo-700.font-semibold.bg-indigo-100.z-0
+                                ."peer-checked:outline-gray-300"."peer-checked:bg-transparent"."peer-checked:text-gray-900"
+                                { "Fit" }
+                            span ."w-1/2".text-center.py-1.rounded-r-md.outline.outline-2.outline-gray-300
+                                ."peer-checked:outline-indigo-400"."peer-checked:z-0"."peer-checked:text-indigo-700"."peer-checked:font-semibold"."peer-checked:bg-indigo-100"
+                                { "Stretch" }
+                        }
                     }
 
                     // Background Color
                     div {
-                        // TODO
+                        label .block.text-sm.font-medium.leading-6.text-gray-900
+                            { "Background Color:" }
+                        .flex.gap-6.mt-3 {
+                            input checked name="color" value="white" type="radio"
+                                .border-none.w-8.h-8.shadow-sm.bg-white
+                                ."checked:bg-none"."checked:text-white"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
+                                ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
+                                ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
+                            input name="color" value="light-gray" type="radio"
+                                .border-none.w-8.h-8.shadow-sm.bg-gray-300
+                                ."checked:bg-none"."checked:text-gray-300"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
+                                ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
+                                ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
+                            input name="color" value="dark-gray" type="radio"
+                            .border-none.w-8.h-8.shadow-sm.bg-gray-600
+                                ."checked:bg-none"."checked:text-gray-600"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
+                                ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
+                                ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
+                            input name="color" value="black" type="radio"
+                                .border-none.w-8.h-8.shadow-sm.bg-gray-800
+                                ."checked:bg-none"."checked:text-gray-800"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
+                                ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
+                                ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
+                        }
                     }
 
                     // Submit buttons
