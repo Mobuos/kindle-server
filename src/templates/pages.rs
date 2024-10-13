@@ -37,7 +37,7 @@ pub fn main(server_images: &Vec<String>) -> Markup {
                         }
                         label for="horizontal" .inline-flex."items-center"."mt-2"."gap-0.5".w-full.max-w-md.rounded-md
                             .cursor-pointer.select-none.bg-white.text-gray-900 {
-                            input #horizontal type="checkbox" value="on" .hidden.peer;
+                            input #horizontal name="horizontal" type="checkbox" value="on" .hidden.peer;
                             span ."w-1/2".text-center.py-1.rounded-l-md.outline.outline-2.outline-indigo-400.text-indigo-700.font-semibold.bg-indigo-100.z-0
                                 ."peer-checked:outline-gray-300"."peer-checked:bg-transparent"."peer-checked:text-gray-900"
                                 { "Vertical" }
@@ -49,13 +49,13 @@ pub fn main(server_images: &Vec<String>) -> Markup {
 
                     // Image adjustment
                     div {
-                        label for="fit" .block.text-sm.font-medium.leading-6.text-gray-900.w-fit {
+                        label for="stretch" .block.text-sm.font-medium.leading-6.text-gray-900.w-fit {
                             "Image Adjustment"
                             // INFO
                         }
-                        label for="fit" .inline-flex."items-center"."mt-2"."gap-0.5".w-full.max-w-md.rounded-md
+                        label for="stretch" .inline-flex."items-center"."mt-2"."gap-0.5".w-full.max-w-md.rounded-md
                             .cursor-pointer.select-none.bg-white.text-gray-900 {
-                            input #fit type="checkbox" value="on" .hidden.peer;
+                            input #stretch name="stretch" type="checkbox" .hidden.peer;
                             span ."w-1/2".text-center.py-1.rounded-l-md.outline.outline-2.outline-indigo-400.text-indigo-700.font-semibold.bg-indigo-100.z-0
                                 ."peer-checked:outline-gray-300"."peer-checked:bg-transparent"."peer-checked:text-gray-900"
                                 { "Fit" }
@@ -70,22 +70,22 @@ pub fn main(server_images: &Vec<String>) -> Markup {
                         label .block.text-sm.font-medium.leading-6.text-gray-900
                             { "Background Color:" }
                         .flex.gap-6.mt-3 {
-                            input checked name="color" value="white" type="radio"
+                            input checked name="background_color" value="white" type="radio"
                                 .border-none.w-8.h-8.shadow-sm.bg-white
                                 ."checked:bg-none"."checked:text-white"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
                                 ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
                                 ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
-                            input name="color" value="light-gray" type="radio"
+                            input name="background_color" value="light_gray" type="radio"
                                 .border-none.w-8.h-8.shadow-sm.bg-gray-300
                                 ."checked:bg-none"."checked:text-gray-300"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
                                 ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
                                 ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
-                            input name="color" value="dark-gray" type="radio"
+                            input name="background_color" value="dark_gray" type="radio"
                             .border-none.w-8.h-8.shadow-sm.bg-gray-600
                                 ."checked:bg-none"."checked:text-gray-600"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
                                 ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
                                 ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
-                            input name="color" value="black" type="radio"
+                            input name="background_color" value="black" type="radio"
                                 .border-none.w-8.h-8.shadow-sm.bg-gray-800
                                 ."checked:bg-none"."checked:text-gray-800"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
                                 ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"

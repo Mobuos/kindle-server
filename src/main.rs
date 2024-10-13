@@ -42,6 +42,9 @@ struct UploadImage<'v> {
     #[field(validate = valid_filename())]
     filename: &'v str,
     set_image: bool,
+    horizontal: bool,
+    stretch: bool,
+    background_color: &'v str,
     // #[field(validate = supported_images())]
     file: TempFile<'v>,
 }
@@ -158,9 +161,30 @@ async fn submit_image_form(
         full_filename = format!("{}.png", user_filename);
     }
 
+    // TODO: Rotation
+    if form.horizontal {
+        todo!("Horizontal rotation is not implemented yet :(");
+    }
+
+    // TODO: Fit / Stretch
+    if form.stretch {
+        todo!("Stretching the image is not implemented yet :(");
+    }
+
+    // Get Background Color
+    println!("------------------{}", form.background_color);
+    let bg_color = match form.background_color {
+        "white" => "white",
+        "light_gray" => "gray60",
+        "dark_gray" => "gray20",
+        "black" => "black",
+        _ => "white",
+    };
+    println!("-------------matched: {}", bg_color);
+
     // TODO: Allow changing background fill - Enum for background
     // Convert image to Kindle-appropriate format
-    match ic::convert(&format!("images/{}", full_filename), "gray") {
+    match ic::convert(&format!("images/{}", full_filename), &bg_color) {
         Ok(_) => {
             server_images
                 .images
