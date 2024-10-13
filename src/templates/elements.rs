@@ -1,4 +1,4 @@
-use maud::{html, Markup, PreEscaped, DOCTYPE};
+use maud::{html, Markup, DOCTYPE};
 
 pub fn nav() -> Markup {
     html! {
@@ -32,10 +32,8 @@ pub fn base(title: &str, content: Markup) -> Markup {
         head {
             meta charset="utf-8";
             title { "KS - " (title)}
-            script src="static/helper.js";
-            (PreEscaped("<script src=\"https://unpkg.com/htmx.org@1.9.12\"
-            integrity=\"sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2\" 
-            crossorigin=\"anonymous\"></script>"))
+            script src="static/helper.js" {}
+            script src="https://unpkg.com/htmx.org@1.9.4" integrity="sha384-zUfuhFKKZCbHTY6aRR46gxiqszMk5tcHjsVFxnUo8VMus4kHGVdIYVbOYYNlKmHV" crossorigin="anonymous" {}
             link rel="stylesheet" href="/static/style.css";
         }
         body {
