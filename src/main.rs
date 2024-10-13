@@ -105,8 +105,8 @@ fn view_index() -> Markup {
 }
 
 #[post("/", data = "<form>")]
-async fn submit_image_form<'r>(
-    mut form: Form<UploadImage<'r>>,
+async fn submit_image_form(
+    mut form: Form<UploadImage<'_>>,
     server_images: &State<ServerImages>,
 ) -> Result<Markup, io::Error> {
     // Save file to server
@@ -255,7 +255,7 @@ async fn stats_battery() -> Markup {
 async fn stats_files() -> Markup {
     let count_kindle = km::get_filenames().len();
     let count_server = fs::read_dir("converted").unwrap().count();
-    html! { "Kindle/Server files: " (count_kindle)"/"(count_server)}
+    html! { ."text-white/70" { "Kindle/Server files: " (count_kindle)"/"(count_server) }}
 }
 
 // ------ Rocket Setup --------- //
