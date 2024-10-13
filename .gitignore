@@ -21,3 +21,6 @@ converted/
 # Added by cargo
 
 /target
+
+# Ignore tailwind CLI
+tailwind
