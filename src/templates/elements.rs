@@ -58,7 +58,7 @@ pub fn show_image(filename: &str) -> Markup {
     html! {
         form {
             input type="hidden" name="text" value=(filename);
-            img .image src={"converted/"(filename)}
+            img .rounded-md src={"converted/"(filename)}
                 onerror="this.onerror=null; this.src='static/resources/notfound.png'"
                 hx-post="/set"
                 hx-vals={"{{\"image_name\": "(filename)"}}"}
@@ -66,7 +66,10 @@ pub fn show_image(filename: &str) -> Markup {
             p { (image_name) }
             // TODO: Delete should give the image_name without extension, server side deletes all images
             // with this name no matter the extension (Is this dangerous?)
-            button .delete hx-delete={"/"(filename)} hx-target="closest form" hx-swap="outerHTML swap:0.5s" { "Delete" }
+            button hx-delete={"/"(filename)} hx-target="closest form" hx-swap="outerHTML swap:0.5s"
+                .border-2.border-gray-300.rounded-md.px-3.py-2.text-sm.text-indigo-700.font-semibold.shadow-sm
+                ."hover:border-indigo-400"."hover:bg-indigo-100"
+                { "Delete" }
         }
     }
 }
