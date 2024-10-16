@@ -70,26 +70,20 @@ pub fn main(server_images: &Vec<String>) -> Markup {
                         label .block.text-sm.font-medium.leading-6.text-gray-900
                             { "Background Color:" }
                         .flex.gap-6.mt-3 {
-                            input checked name="background_color" value="white" type="radio"
-                                .border-none.w-8.h-8.shadow-sm.bg-white
-                                ."checked:bg-none"."checked:text-white"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
-                                ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
-                                ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
-                            input name="background_color" value="light_gray" type="radio"
-                                .border-none.w-8.h-8.shadow-sm.bg-gray-300
-                                ."checked:bg-none"."checked:text-gray-300"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
-                                ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
-                                ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
-                            input name="background_color" value="dark_gray" type="radio"
-                            .border-none.w-8.h-8.shadow-sm.bg-gray-600
-                                ."checked:bg-none"."checked:text-gray-600"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
-                                ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
-                                ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
-                            input name="background_color" value="black" type="radio"
-                                .border-none.w-8.h-8.shadow-sm.bg-gray-800
-                                ."checked:bg-none"."checked:text-gray-800"."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
-                                ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
-                                ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
+                            // Explicit classes for tailwind css generation
+                            @let colors = vec![
+                                ("bg-white", "text-white", "white"),
+                                ("bg-gray-300", "text-gray-300", "light-gray"),
+                                ("bg-gray-600", "text-gray-600", "dark_gray"),
+                                ("bg-gray-800", "text-gray-800", "black"),
+                            ];
+                            @for (bg_color, checked_text_color, value) in &colors {
+                                input checked name="background_color" value=(value) type="radio"
+                                    .border-none.w-8.h-8.shadow-sm.(bg_color)
+                                    ."checked:bg-none".(checked_text_color)."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
+                                    ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
+                                    ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
+                            }
                         }
                     }
 
