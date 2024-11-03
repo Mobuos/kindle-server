@@ -33,7 +33,18 @@ pub fn main(server_images: &Vec<String>) -> Markup {
                     div {
                         label for="horizontal" .block.text-sm.font-medium.leading-6.text-gray-900.w-fit {
                             "Kindle Orientation"
-                            // INFO
+                            ( elements::label( html! {
+                                .flex.gap-3.mx-3.my-1 {
+                                    .flex.flex-col {
+                                        img .w-min.h-min.m-auto.p-3 src="/static/resources/Kindle-Vertical.png" alt="Image of a Kindle vertically aligned.";
+                                        p .text-center.text-gray-900.text-sm.font-semibold { "Vertical" }
+                                    }
+                                    .flex.flex-col {
+                                        img .w-min.h-min.m-auto.p-3 src="/static/resources/Kindle-Horizontal.png" alt="Image of a Kindle horizontally aligned.";
+                                        p .text-center.text-gray-900.text-sm.font-semibold { "Horizontal" }
+                                    }
+                                }
+                            }) )
                         }
                         label for="horizontal" .inline-flex."items-center"."mt-2"."gap-0.5".w-full.max-w-md.rounded-md
                             .cursor-pointer.select-none.bg-white.text-gray-900 {
@@ -51,7 +62,18 @@ pub fn main(server_images: &Vec<String>) -> Markup {
                     div {
                         label for="stretch" .block.text-sm.font-medium.leading-6.text-gray-900.w-fit {
                             "Image Adjustment"
-                            // INFO
+                            ( elements::label( html! {
+                                .flex.gap-3.mx-3.my-1 {
+                                    .flex.flex-col {
+                                        img .w-min.h-min.m-auto.p-3 src="/static/resources/Kindle-Fit.png" alt="Image of a Kindle showing an image fitting on its screen, without altering its original resolution.";
+                                        p .text-center.text-gray-900.text-sm.font-semibold { "Fit" }
+                                    }
+                                    .flex.flex-col {
+                                        img .w-min.h-min.m-auto.p-3 src="/static/resources/Kindle-Stretch.png" alt="Image of a Kindle showing an image stretched to fit on the Kindle's original resolution";
+                                        p .text-center.text-gray-900.text-sm.font-semibold { "Stretch" }
+                                    }
+                                }
+                            }) )
                         }
                         label for="stretch" .inline-flex."items-center"."mt-2"."gap-0.5".w-full.max-w-md.rounded-md
                             .cursor-pointer.select-none.bg-white.text-gray-900 {
