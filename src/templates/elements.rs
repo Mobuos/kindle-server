@@ -32,6 +32,22 @@ pub fn nav() -> Markup {
     }
 }
 
+pub fn footer() -> Markup {
+    html! {
+        footer ."bg-gray-800".rounded-lg.shadow.m-4 {
+            .w-full.mx-auto.max-w-screen-xl."p-4"."md:flex"."md:items-center"."md:justify-between" {
+                p .text-sm.text-gray-400 {
+                    "Made by "
+                    a href="https://github.com/Mobuos" ."hover:underline" { "mobuos" }
+                }
+                p .text-sm.text-gray-400 {
+                    a href="https://github.com/Mobuos/kindle-server" ."hover:underline" { "Check out the source code!" }
+                }
+            }
+        }
+    }
+}
+
 pub fn base(title: &str, content: Markup) -> Markup {
     html! {
         (DOCTYPE)
@@ -43,12 +59,10 @@ pub fn base(title: &str, content: Markup) -> Markup {
             link rel="stylesheet" href="/static/tw.css";
             link rel="stylesheet" href="https://rsms.me/inter/inter.css";
         }
-        body .bg-gray-100.min-h-screen {
+        body .flex.flex-col.bg-gray-100.h-screen.justify-between {
             (nav())
-            .content {(content)}
-            footer {
-                // TODO
-            }
+            .mb-auto {(content)}
+            (footer())
         }
     }
 }
