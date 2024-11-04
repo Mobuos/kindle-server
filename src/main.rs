@@ -3,7 +3,6 @@ use image_converter_wrapper as ic;
 mod kindle_manager_wrapper;
 use kindle_manager_wrapper as km;
 use rocket::{form, Request, State};
-use templates::pages::oob_force_update_file_count;
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -19,7 +18,7 @@ use maud::{html, Markup};
 
 // maud templates
 mod templates;
-use templates::{errors, pages};
+use templates::{errors, oob, pages};
 
 #[macro_use]
 extern crate rocket;
@@ -208,7 +207,7 @@ async fn submit_image_form(
         km::set(&full_filename);
     }
     let image_names = km::get_filenames();
-    return Ok(pages::oob_swap_server_images(&image_names));
+    return Ok(oob::swap_server_images(&image_names));
 }
 
 #[post("/set", data = "<image_name>")]
@@ -240,7 +239,7 @@ async fn sync(server_images: &State<ServerImages>) -> Result<Markup, io::Error> 
 
     // Check kindle again for updated images
     let image_names = km::get_filenames();
-    return Ok(pages::oob_swap_server_images(&image_names));
+    return Ok(oob::swap_server_images(&image_names));
 }
 
 #[delete("/<filename>")]
@@ -265,7 +264,7 @@ async fn delete_image(
     }
 
     km::delete_image(&filename);
-    Ok(oob_force_update_file_count())
+    Ok(oob::force_update_file_count())
 }
 
 // Route /stats
