@@ -36,11 +36,11 @@ pub fn main(server_images: &Vec<String>) -> Markup {
                             ( elements::label( html! {
                                 .flex.gap-3.mx-3.my-1 {
                                     .flex.flex-col {
-                                        img .w-min.h-min.m-auto.p-3 src="/static/resources/Kindle-Vertical.png" alt="Image of a Kindle vertically aligned.";
+                                        img .object-scale-down.w-20.h-min.m-auto.p-3 src="/static/resources/Kindle-Vertical.png" alt="Image of a Kindle vertically aligned.";
                                         p .text-center.text-gray-900.text-sm.font-semibold { "Vertical" }
                                     }
                                     .flex.flex-col {
-                                        img .w-min.h-min.m-auto.p-3 src="/static/resources/Kindle-Horizontal.png" alt="Image of a Kindle horizontally aligned.";
+                                        img .object-scale-down.w-min.h-20.m-auto.p-3 src="/static/resources/Kindle-Horizontal.png" alt="Image of a Kindle horizontally aligned.";
                                         p .text-center.text-gray-900.text-sm.font-semibold { "Horizontal" }
                                     }
                                 }
@@ -65,11 +65,11 @@ pub fn main(server_images: &Vec<String>) -> Markup {
                             ( elements::label( html! {
                                 .flex.gap-3.mx-3.my-1 {
                                     .flex.flex-col {
-                                        img .w-min.h-min.m-auto.p-3 src="/static/resources/Kindle-Fit.png" alt="Image of a Kindle showing an image fitting on its screen, without altering its original resolution.";
+                                        img .object-scale-down.w-20.h-min.m-auto.p-3 src="/static/resources/Kindle-Fit.png" alt="Image of a Kindle showing an image fitting on its screen, without altering its original resolution.";
                                         p .text-center.text-gray-900.text-sm.font-semibold { "Fit" }
                                     }
                                     .flex.flex-col {
-                                        img .w-min.h-min.m-auto.p-3 src="/static/resources/Kindle-Stretch.png" alt="Image of a Kindle showing an image stretched to fit on the Kindle's original resolution";
+                                        img .object-scale-down.w-20.h-min.m-auto.p-3 src="/static/resources/Kindle-Stretch.png" alt="Image of a Kindle showing an image stretched to fit on the Kindle's original resolution";
                                         p .text-center.text-gray-900.text-sm.font-semibold { "Stretch" }
                                     }
                                 }
