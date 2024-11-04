@@ -2,9 +2,11 @@ use maud::{html, Markup};
 
 use super::elements;
 
+// Main page, shows submission form, images available on the Kindle and actions available for those.
 pub fn main(server_images: &Vec<String>) -> Markup {
     let content = html! {
         .mx-auto.max-w-5xl.px-4.py-12 {
+            // Submission Form
             form hx-post="/" hx-encoding="multipart/form-data" hx-swap="none"
                 .grid.grid-cols-1.gap-x-6.gap-y-7.pb-12 {
                     // Choose image and rename
@@ -123,6 +125,7 @@ pub fn main(server_images: &Vec<String>) -> Markup {
             // Separator
             .border-b."border-gray-900/10".mb-12 {}
 
+            // Grid of images available on the Kindle
             #server-images .grid."grid-cols-2"."sm:grid-cols-4"."md:grid-cols-5".gap-x-3.gap-y-5{
                 @if server_images.is_empty() {
                     p { "No images found on the Kindle!" }
