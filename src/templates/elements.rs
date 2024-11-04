@@ -6,7 +6,7 @@ pub fn nav() -> Markup {
             .mx-auto.max-w-7xl.px-6 {
                 .relative.flex.h-24.items-center.justify-between {
                     .logo {
-                        h1 .text-white.font-bold.text-2xl { "Kindle Server" }
+                        h1 .text-white.font-bold.text-2xl { a href="/" { "Kindle Server" } }
                     }
                     nav {
                         ul .flex.items-center.space-x-8 {
