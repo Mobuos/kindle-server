@@ -112,12 +112,10 @@ pub fn main(server_images: &Vec<String>) -> Markup {
                     // Submit buttons
                     .flex.items-center.justify-end.gap-x-6 {
                         button name="set_image" value="false" type="submit"
-                            .border-2.border-gray-300.rounded-md.px-3.py-2.text-sm.text-indigo-700.font-semibold.shadow-sm
-                            ."hover:border-indigo-400"."hover:bg-indigo-100"
+                            .btn-secondary
                             { "Upload" }
                         button name="set_image" value="true" type="submit"
-                            .rounded-md.bg-indigo-600.px-3.py-2.text-sm.font-semibold.leading-6.text-white.shadow-sm
-                            ."hover:bg-indigo-500"."focus-visible:outline"."focus-visible:outline-2"
+                            .btn-primary
                             { "Upload and Set" }
                     }
             }

@@ -19,7 +19,7 @@ pub fn nav() -> Markup {
                                 "Checking File Count.."
                             }
                             li hx-post="/sync" hx-swap="none" hx-indicator=".sync" {
-                                button .rounded-md.px-3.py-2.text-white.font-medium."bg-indigo-600"."hover:bg-indigo-500" {
+                                button .btn-primary {
                                     div .sync #sync-text { "Sync" }
                                     img .sync #sync-loading width="16px" src="/static/resources/pulse-rings-2.svg";
                                 }

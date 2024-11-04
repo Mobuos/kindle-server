@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Use @apply sparingly (https://tailwindcss.com/docs/reusing-styles) */
+@layer components {
+    .btn-primary {
+        @apply rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 inline-block
+    }
+    .btn-secondary {
+        @apply  border-2 border-gray-300 rounded-md px-3 py-2 text-sm text-indigo-700 font-semibold shadow-sm hover:border-indigo-400 hover:bg-indigo-100 inline-block
+    }
+}
+
 form.htmx-swapping {
     opacity: 0;
     transition: opacity 0.5s ease-out;
