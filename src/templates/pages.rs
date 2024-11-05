@@ -103,7 +103,7 @@ pub fn main(server_images: &Vec<String>) -> Markup {
                             ];
                             @for (bg_color, checked_text_color, value) in &colors {
                                 input checked name="background_color" value=(value) type="radio"
-                                    .border-none.w-8.h-8.shadow-sm.(bg_color)
+                                    .cursor-pointer.border-none.w-8.h-8.shadow-sm.(bg_color)
                                     ."checked:bg-none".(checked_text_color)."checked:outline"."checked:outline-4"."checked:outline-indigo-300"
                                     ."checked:outline-offset-4"."focus:outline-none"."focus:outline-offset-4"."focus:outline-indigo-300"
                                     ."focus:outline-4"."focus:ring-2"."focus:ring-offset-8"."focus:ring-indigo-200";
