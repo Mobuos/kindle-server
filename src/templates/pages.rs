@@ -126,10 +126,12 @@ pub fn main(server_images: &Vec<String>) -> Markup {
             .border-b."border-gray-900/10".mb-12 {}
 
             // Grid of images available on the Kindle
-            #server-images .grid."grid-cols-2"."sm:grid-cols-4"."md:grid-cols-5".gap-x-3.gap-y-5{
-                @if server_images.is_empty() {
-                    p { "No images found on the Kindle!" }
-                } @else {
+            @if server_images.is_empty() {
+                .mx-auto.max-w-screen-sm.text-center {
+                    p .mb-4.text-lg.font-light.text-gray-500 { "No images found on the Kindle!" }
+                }
+            } @else {
+                #server-images .grid."grid-cols-2"."sm:grid-cols-4"."md:grid-cols-5".gap-x-3.gap-y-5{
                     @for filename in server_images {
                         (elements::show_image(filename))
                     }
