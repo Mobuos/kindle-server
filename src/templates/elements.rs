@@ -93,7 +93,7 @@ pub fn label(content: Markup) -> Markup {
         .relative.group.inline-block.w-min {
             .h-2 {}
             span .select-none.text-gray-300 {( icon_info(20, 12) )}
-            .opacity-0.invisible."group-hover:opacity-100"."group-hover:visible".absolute.bottom-full."left-1/2".transform."-translate-x-1/2".w-max.z-50 {
+            .pointer-events-none.opacity-0.invisible.transition-opacity."duration-200"."group-hover:opacity-100"."group-hover:visible".absolute.bottom-full."left-1/2".transform."-translate-x-1/2".w-max.z-50 {
                 .bg-gray-200.text-gray-900.border.rounded-lg.py-2.z-50.bottom-12 {
                     // Info Contents
                     ( content )
