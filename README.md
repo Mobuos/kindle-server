@@ -1,13 +1,11 @@
 # Kindle Server
 
 This a small project that aims to provide a simple web UI for displaying and managing images on a jailbroken Kindle.
+The main project can be found inside `kindle_server`. 
 
 ![Kindle Server UI](https://github.com/user-attachments/assets/d0a9d76d-494c-45ba-b956-5575b51752ce)
 
-> Website UI is currently going through a redesign
-
 Here's how I run the docker container:
-
 
 ```bash
 docker build kindle_server/ -t kindle_server
