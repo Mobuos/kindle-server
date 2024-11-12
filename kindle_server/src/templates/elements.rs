@@ -41,7 +41,7 @@ pub fn footer() -> Markup {
                     a href="https://github.com/Mobuos" ."hover:underline" { "mobuos" }
                 }
                 p .text-sm.text-gray-400 {
-                    a href="https://github.com/Mobuos/kindle-server" ."hover:underline" { "Check out the source code!" }
+                    a href="https://github.com/Mobuos/kindle_server" ."hover:underline" { "Check out the source code!" }
                 }
             }
         }

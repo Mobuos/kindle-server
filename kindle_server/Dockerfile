@@ -8,5 +8,5 @@ RUN chown -R root:root ~/.ssh
 # TODO: Use an env variable?
 RUN echo "host kindle\n user root\n hostname 192.168.15.118" >> ~/.ssh/config 
 RUN cargo build --release
-CMD ["./target/release/kindle-server"]
+CMD ["./target/release/kindle_server"]
 EXPOSE 8000
