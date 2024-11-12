@@ -10,7 +10,7 @@ Here's how I run the docker container:
 
 
 ```bash
-docker build . -t kindle_server
+docker build kindle-server/ -t kindle_server
 docker run -d -p 7070:8000 -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v ~/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro -v ~/.ssh/known_hosts:/root/.ssh/known_hosts:ro --name kindle kindle_server
 ```
 
@@ -18,7 +18,7 @@ docker run -d -p 7070:8000 -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-ag
 
 ---
 
-For development:
+For development, inside the `kindle-server` folder:
 
 ```bash
 ./tailwind -i static/style.css -o static/tw.css --watch
