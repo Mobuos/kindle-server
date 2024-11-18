@@ -9,7 +9,7 @@ pub enum KindleManagerError {
     #[error("UTF-8 conversion failed: {0}")]
     Utf8Error(#[from] std::string::FromUtf8Error),
 
-    #[error("Command failed with stderr: {0}")]
+    #[error("Command failed: {0}")]
     CommandError(String),
 }
 pub struct KindleManager {
