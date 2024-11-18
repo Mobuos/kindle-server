@@ -23,5 +23,5 @@ For development, inside the `kindle_server` folder:
 ```
 
 ```bash
-cargo-watch -q -c -x 'run'
+cargo-watch -q -c -x 'run -p kindle_server'
 ```

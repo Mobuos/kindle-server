@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
-use std::{fs, io};
+use std::{env, fs, io};
 
 use rocket::form::Form;
 use rocket::fs::{relative, FileName, FileServer, TempFile};
@@ -285,8 +285,14 @@ async fn stats_files() -> Markup {
 
 fn setup_rocket() -> std::io::Result<()> {
     // Create necessary dirs
-    fs::create_dir_all("images/tmp")?;
-    fs::create_dir_all("converted")?;
+    println!(
+        "{}",
+        env::current_dir()
+            .expect("could not get curr dir")
+            .to_string_lossy()
+    );
+    fs::create_dir_all("./images/tmp")?;
+    fs::create_dir_all("./converted")?;
 
     Ok(())
 }
@@ -308,8 +314,8 @@ fn rocket() -> _ {
         )
         .mount("/stats", routes![stats_battery, stats_files])
         // Static files
-        .mount("/images/", FileServer::from(relative!("/images")))
-        .mount("/converted/", FileServer::from(relative!("/converted")))
+        .mount("/images/", FileServer::from(relative!("../images")))
+        .mount("/converted/", FileServer::from(relative!("../converted")))
         .mount("/static/", FileServer::from(relative!("/static")))
         // Catchers
         .register("/", catchers![not_found])
