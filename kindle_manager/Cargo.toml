@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 openssh = { version = "0.11.3", features = ["native-mux"] }
+thiserror = "2.0.3"
 tokio = "1.41.1"

@@ -13,13 +13,16 @@ struct Args {
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
-    let km = KindleManager::new(args.address, args.location)
+    let kindle_manager = KindleManager::new(args.address, args.location)
         .await
-        .expect("Failed to create KindleManager");
+        .expect("Failed to create a session with the provided address");
 
-    if let Ok(files) = km.get_files().await {
-        for file in files {
-            println!("{}", file);
+    match kindle_manager.get_files().await {
+        Ok(files) => {
+            for file in files {
+                println!("- {}", file);
+            }
         }
+        Err(err) => eprintln!("Failed to get files: {}", err),
     }
 }
