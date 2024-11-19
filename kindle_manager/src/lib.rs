@@ -1,5 +1,5 @@
 use std::{
-    path::{Path, PathBuf},
+    path::Path,
     process::{Command, Output},
 };
 
@@ -54,6 +54,65 @@ impl KindleManager {
             session,
             location,
         })
+    }
+
+    pub async fn debug_print(&self, text: &str) -> Result<(), KindleManagerError> {
+        let _ = self
+            .session
+            .command("fbink")
+            .arg("-q")
+            .arg(text)
+            .args(["-x", "1"])
+            .args(["-y", "2"])
+            .output()
+            .await?
+            .check_stdout()?;
+        Ok(())
+    }
+
+    // Credit to https://github.com/mattzzw/kindle-clock
+    /// Prepares the Kindle to act as a display, disabling services to save power,
+    /// entering power-saving mode and disabling the screen-saver.
+    pub async fn prep(&self) -> Result<(), KindleManagerError> {
+        // TODO: Check if we can stop framework and powerd
+        let services_to_stop = ["lab126_gui", "otaupd", "phd", "tmd", "x", "todo"];
+        for service in services_to_stop {
+            self.stop_service(service).await?;
+        }
+
+        // Set lowest CPU clock
+        let _ = self
+            .session
+            .command("sh")
+            .arg("-c")
+            .arg("echo powersave > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
+            .output()
+            .await?
+            .check_stdout()?;
+
+        // Disable Screensaver
+        let _ = self
+            .session
+            .command("sh")
+            .arg("-c")
+            .arg("lipc-set-prop com.lab126.powerd preventScreenSaver 1")
+            .output()
+            .await?
+            .check_stdout()?;
+
+        Ok(())
+    }
+
+    async fn stop_service(&self, service: &str) -> Result<(), KindleManagerError> {
+        let _ = self
+            .session
+            .command("stop")
+            .arg(service)
+            .output()
+            .await?
+            .check_stdout()?;
+
+        Ok(())
     }
 
     pub async fn list_files(&self) -> Result<Vec<String>, KindleManagerError> {
@@ -120,6 +179,40 @@ impl KindleManager {
             .check_stdout()?;
 
         Ok(())
+    }
+
+    pub async fn set_image(&self, filename: &str) -> Result<(), KindleManagerError> {
+        let _ = self
+            .session
+            .command("sh")
+            .arg("-c")
+            .arg(format!(
+                "eips -c; eips -f; eips -g \"{}/{}\"",
+                self.location, filename
+            ))
+            .output()
+            .await?
+            .check_stdout()?;
+
+        Ok(())
+    }
+
+    pub async fn info_battery(&self) -> Result<u8, KindleManagerError> {
+        let stdout = self
+            .session
+            .command("gasgauge-info")
+            .arg("-c")
+            .output()
+            .await?
+            .check_stdout()?;
+
+        let stdout: String = stdout.chars().filter(|c| c.is_digit(10)).collect();
+        match stdout.parse::<u8>() {
+            Ok(battery) => Ok(battery),
+            Err(err) => Err(KindleManagerError::CommandError(format!(
+                "Failed conversion of {stdout}: {err}"
+            ))),
+        }
     }
 }
 

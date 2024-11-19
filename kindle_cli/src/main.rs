@@ -1,7 +1,4 @@
-use std::{
-    path::{self, PathBuf},
-    process,
-};
+use std::{path::PathBuf, process};
 
 use clap::Parser;
 use kindle_manager::KindleManager;
@@ -28,22 +25,12 @@ async fn main() {
     };
 
     println!();
-    push_file(&kindle_manager, "oi.png", "test-images/logo.png").await;
-
-    println!();
-    pull_file(&kindle_manager, "oi.png", "test-images/logo.png").await;
-
-    println!();
-    list_files(&kindle_manager).await;
-
-    println!();
-    delete_file(&kindle_manager, "oi.png").await;
-
-    println!();
-    delete_file(&kindle_manager, "oi.png").await;
-
-    println!();
-    list_files(&kindle_manager).await;
+    if let Ok(battery) = kindle_manager.info_battery().await {
+        if battery < 30 {
+            debug_print(&kindle_manager, "    LOW BATTERY!").await;
+        }
+        debug_print(&kindle_manager, &format!("{battery}%")).await;
+    }
 }
 
 async fn list_files(kindle_manager: &KindleManager) {
@@ -67,7 +54,7 @@ async fn list_files(kindle_manager: &KindleManager) {
 
 async fn delete_file(kindle_manager: &KindleManager, filename: &str) {
     if let Err(err) = kindle_manager.delete_file(filename).await {
-        eprintln!("Failed to delete {}", filename);
+        eprintln!("Failed to delete \"{filename}\"");
         eprintln!("{err}");
         process::exit(1);
     } else {
@@ -80,7 +67,7 @@ async fn pull_file(kindle_manager: &KindleManager, filename: &str, path_file: &s
         .pull_file(filename, &PathBuf::from(path_file))
         .await
     {
-        Ok(_) => println!("Pulled {}", filename),
+        Ok(_) => println!("Pulled \"{filename}\""),
         Err(err) => {
             eprintln!("Failed to pull file");
             eprintln!("{err}");
@@ -94,9 +81,42 @@ async fn push_file(kindle_manager: &KindleManager, filename: &str, path_file: &s
         .push_file(&PathBuf::from(path_file), filename)
         .await
     {
-        Ok(_) => println!("Pushed {}", filename),
+        Ok(_) => println!("Pushed \"{filename}\""),
         Err(err) => {
             eprintln!("Failed to push file");
+            eprintln!("{err}");
+            process::exit(1);
+        }
+    }
+}
+
+async fn set_image(kindle_manager: &KindleManager, filename: &str) {
+    match kindle_manager.set_image(filename).await {
+        Ok(_) => println!("Image \"{filename}\" set"),
+        Err(err) => {
+            eprintln!("Failed to set image \"{filename}\"");
+            eprintln!("{err}");
+            process::exit(1);
+        }
+    }
+}
+
+async fn info_battery(kindle_manager: &KindleManager) {
+    match kindle_manager.info_battery().await {
+        Ok(battery) => println!("Battery is at {battery}%"),
+        Err(err) => {
+            eprintln!("Failed to get battery info");
+            eprintln!("{err}");
+            process::exit(1);
+        }
+    }
+}
+
+async fn debug_print(kindle_manager: &KindleManager, text: &str) {
+    match kindle_manager.debug_print(text).await {
+        Ok(battery) => println!("Printed \"{text}\""),
+        Err(err) => {
+            eprintln!("Failed to print debug message!");
             eprintln!("{err}");
             process::exit(1);
         }
