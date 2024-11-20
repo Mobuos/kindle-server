@@ -24,6 +24,8 @@ pub enum KindleManagerError {
     #[error("Argument out of allowed range: {0}")]
     OutOfRange(String),
 }
+
+#[derive(Debug)]
 pub struct KindleManager {
     address: String,
     session: Session,
@@ -49,9 +51,11 @@ impl CheckStdout for Output {
 }
 
 impl KindleManager {
-    pub async fn new(address: String, location: String) -> Result<Self, KindleManagerError> {
+    pub fn new(address: String, location: String) -> Result<Self, KindleManagerError> {
         // Create an openSSH session
-        let session = Session::connect_mux(&address, KnownHosts::Strict).await?;
+        let runtime = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
+        let session =
+            runtime.block_on(async { Session::connect_mux(&address, KnownHosts::Strict).await })?;
 
         Ok(KindleManager {
             address,
@@ -239,16 +243,48 @@ impl KindleManager {
 }
 
 pub mod image_converter {
-    use std::path::PathBuf;
+    use std::{path::PathBuf, process::Command};
 
-    use crate::KindleManagerError;
+    use crate::{CheckStdout, KindleManagerError};
 
-    pub fn convert_image(
+    // TODO: Check if the raster library can replace this
+    pub async fn convert_image(
         background: &str,
         origin: &PathBuf,
         destination: &PathBuf,
     ) -> Result<(), KindleManagerError> {
-        println!("Convertendo brrr broooo briiiii pipipi done.");
+        let stdout = Command::new("magick")
+            .arg(origin)
+            .args([
+                "-filter",
+                "LanczosSharp",
+                "-resize",
+                "758x1024",
+                "-gravity",
+                "center",
+                "-extent",
+                "758x1024",
+                "-colorspace",
+                "Gray",
+                "-dither",
+                "FloydSteinberg",
+                "-remap",
+                "kindle_colors.gif", // TODO: Include this in the final binary somehow? https://stackoverflow.com/questions/76252932/creating-palette-image-on-the-fly-for-remap-behind-palette-is-not-reset-each-t
+                "-quality",
+                "75",
+                "-define",
+                "png:color-type=0",
+                "-define",
+                "png:bit-depth=8",
+            ])
+            .arg("-background")
+            .arg(background)
+            .arg(destination)
+            .output()?
+            .check_stdout()?;
+
+        println!("{stdout}");
+
         Ok(())
     }
 }

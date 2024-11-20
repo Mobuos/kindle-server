@@ -6,9 +6,12 @@ use kindle_manager::{image_converter, KindleManager};
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
+    /// Address required to SSH into the Kindle device
+    // Default is "kindle", you can add it into your ~/.ssh/config as a host to make things easier :)
     #[arg(short, long, default_value_t = String::from("kindle"))]
     address: String,
 
+    /// Location where files are stored on the Kindle
     #[arg(short, long, default_value_t = String::from("/mnt/us/images"))]
     location: String,
 
@@ -77,7 +80,7 @@ enum BackgroundColor {
 #[tokio::main]
 async fn main() {
     let args = Cli::parse();
-    let kindle_manager = match KindleManager::new(args.address, args.location).await {
+    let kindle_manager = match KindleManager::new(args.address, args.location) {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Failed to create a session with the provided address.");
@@ -102,11 +105,11 @@ async fn main() {
         Commands::BatteryInfo => info_battery(&kindle_manager).await,
         Commands::DebugPrint { message } => debug_print(&kindle_manager, &message).await,
         Commands::Backlight { intensity } => set_backlight(&kindle_manager, intensity).await,
-        Commands::Convert { original_path, final_path, background } => convert_image(background, &original_path, &final_path),
+        Commands::Convert { original_path, final_path, background } => convert_image(background, &original_path, &final_path).await,
     }
 }
 
-fn convert_image(background: BackgroundColor, origin: &PathBuf, destination: &PathBuf) {
+async fn convert_image(background: BackgroundColor, origin: &PathBuf, destination: &PathBuf) {
     let color = match background {
         BackgroundColor::White => "white",
         BackgroundColor::LightGray => "gray60",
@@ -114,7 +117,7 @@ fn convert_image(background: BackgroundColor, origin: &PathBuf, destination: &Pa
         BackgroundColor::Black => "black",
     };
 
-    match image_converter::convert_image(color, origin, destination) {
+    match image_converter::convert_image(color, origin, destination).await {
         Ok(_) => println!("Converted successfully"),
         Err(err) => {
             eprintln!("Failed to convert the image!");

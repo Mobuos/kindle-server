@@ -124,30 +124,30 @@ pub fn get_filenames() -> Vec<String> {
         .collect()
 }
 
-pub fn delete_image(filename: &str) {
-    if file_exists(filename) {
-        Command::new("bash")
-            .arg("./kindle-manager.sh")
-            .arg("-a")
-            .arg("kindle")
-            .arg("--delete")
-            .arg(filename)
-            .output()
-            .expect(format!("Failed to delete '{}'!", filename).as_str())
-            .check_status();
-    } else {
-        println!("File {} not found!", filename);
-    }
-}
+// pub fn delete_image(filename: &str) {
+//     if file_exists(filename) {
+//         Command::new("bash")
+//             .arg("./kindle-manager.sh")
+//             .arg("-a")
+//             .arg("kindle")
+//             .arg("--delete")
+//             .arg(filename)
+//             .output()
+//             .expect(format!("Failed to delete '{}'!", filename).as_str())
+//             .check_status();
+//     } else {
+//         println!("File {} not found!", filename);
+//     }
+// }
 
-pub fn get_battery() -> String {
-    let output = Command::new("bash")
-        .arg("./kindle-manager.sh")
-        .arg("-a")
-        .arg("kindle")
-        .arg("--battery")
-        .output()
-        .expect("Failed to get battery info from Kindle");
+// pub fn get_battery() -> String {
+//     let output = Command::new("bash")
+//         .arg("./kindle-manager.sh")
+//         .arg("-a")
+//         .arg("kindle")
+//         .arg("--battery")
+//         .output()
+//         .expect("Failed to get battery info from Kindle");
 
-    String::from_utf8(output.stdout).unwrap()
-}
+//     String::from_utf8(output.stdout).unwrap()
+// }

@@ -1,6 +1,7 @@
 mod image_converter_wrapper;
 use image_converter_wrapper as ic;
 mod kindle_manager_wrapper;
+use kindle_manager::{image_converter, KindleManager};
 use kindle_manager_wrapper as km;
 use rocket::{form, Request, State};
 
@@ -32,6 +33,12 @@ fn not_found(req: &Request<'_>) -> Markup {
 #[derive(Debug)]
 struct ServerImages {
     images: Mutex<HashSet<String>>,
+}
+
+// KindleManager Connection
+#[derive(Debug)]
+struct KindleM {
+    manager: KindleManager,
 }
 
 // Upload Image Form
@@ -246,6 +253,7 @@ async fn sync(server_images: &State<ServerImages>) -> Result<Markup, io::Error> 
 async fn delete_image(
     filename: &str,
     server_images: &State<ServerImages>,
+    km: &State<KindleM>,
 ) -> Result<Markup, io::Error> {
     match fs::remove_file(format!("converted/{}", filename)) {
         Ok(_) => {
@@ -263,15 +271,24 @@ async fn delete_image(
         }
     }
 
-    km::delete_image(&filename);
+    if let Err(err) = km.manager.delete_file(filename).await {
+        eprintln!("> Failed to delete file!");
+        eprintln!("{err}");
+    }
     Ok(oob::force_update_file_count())
 }
 
 // Route /stats
 #[get("/battery")]
-async fn stats_battery() -> Markup {
-    let battery = km::get_battery();
-    html! { "Battery: " (battery) }
+async fn stats_battery(km: &State<KindleM>) -> Markup {
+    match km.manager.info_battery().await {
+        Ok(battery) => html! { "Battery: " (battery) "%" },
+        Err(err) => {
+            eprintln!("> Failed to get battery info");
+            eprintln!("{err}");
+            html! { "Battery: ??" }
+        }
+    }
 }
 
 #[get("/files")]
@@ -302,11 +319,23 @@ fn rocket() -> _ {
     if let Err(error) = setup_rocket() {
         panic!("{error}");
     }
+
+    // TODO: Remove this hardcode
+    // Start Kindle Manager
+    let manager = match KindleManager::new("kindle".into(), "/mnt/us/images".into()) {
+        Ok(manager) => manager,
+        Err(err) => {
+            eprintln!("Failed to start Kindle Manager");
+            panic!("{err}");
+        }
+    };
+
     rocket::build()
         // State
         .manage(ServerImages {
             images: Mutex::new(HashSet::from_iter(get_server_images())),
         })
+        .manage(KindleM { manager })
         // Routes
         .mount(
             "/",
