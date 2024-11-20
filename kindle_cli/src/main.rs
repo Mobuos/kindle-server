@@ -1,12 +1,12 @@
 use std::{path::PathBuf, process};
 
-use clap::{Parser, Subcommand};
-use kindle_manager::KindleManager;
+use clap::{Parser, Subcommand, ValueEnum};
+use kindle_manager::{image_converter, KindleManager};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
-    #[arg(short, long)]
+    #[arg(short, long, default_value_t = String::from("kindle"))]
     address: String,
 
     #[arg(short, long, default_value_t = String::from("/mnt/us/images"))]
@@ -40,6 +40,38 @@ enum Commands {
     BatteryInfo,
     /// Shows a debug message on screen
     DebugPrint { message: String },
+    Backlight {
+        #[arg(value_parser = clap::value_parser!(u8))]
+        intensity: u8,
+    },
+    /// Convert an image into a Kindle-appropriate format
+    Convert {
+        /// Image to be converted
+        original_path: PathBuf,
+        /// Path to destination
+        final_path: PathBuf,
+        /// Background color
+        #[arg(
+            short, 
+            long, 
+            require_equals = true, 
+            num_args = 0..=1, 
+            default_value_t = BackgroundColor::Gray, 
+            default_missing_value = "Gray", 
+            value_enum
+        )]
+        background: BackgroundColor,
+    },
+}
+
+#[derive(ValueEnum, Copy, Clone, Debug, PartialEq, Eq)]
+enum BackgroundColor {
+    White,
+    LightGray,
+    Gray,
+    Black,
+    // TODO: Automatically find background color based on image
+    // Auto,
 }
 
 #[tokio::main]
@@ -69,6 +101,26 @@ async fn main() {
         Commands::Set { filename } => set_image(&kindle_manager, &filename).await,
         Commands::BatteryInfo => info_battery(&kindle_manager).await,
         Commands::DebugPrint { message } => debug_print(&kindle_manager, &message).await,
+        Commands::Backlight { intensity } => set_backlight(&kindle_manager, intensity).await,
+        Commands::Convert { original_path, final_path, background } => convert_image(background, &original_path, &final_path),
+    }
+}
+
+fn convert_image(background: BackgroundColor, origin: &PathBuf, destination: &PathBuf) {
+    let color = match background {
+        BackgroundColor::White => "white",
+        BackgroundColor::LightGray => "gray60",
+        BackgroundColor::Gray => "gray20",
+        BackgroundColor::Black => "black",
+    };
+
+    match image_converter::convert_image(color, origin, destination) {
+        Ok(_) => println!("Converted successfully"),
+        Err(err) => {
+            eprintln!("Failed to convert the image!");
+            eprintln!("{err}");
+            process::exit(1);
+        }
     }
 }
 
@@ -161,6 +213,17 @@ async fn debug_print(kindle_manager: &KindleManager, text: &str) {
         Ok(_) => println!("Printed \"{text}\""),
         Err(err) => {
             eprintln!("Failed to print debug message!");
+            eprintln!("{err}");
+            process::exit(1);
+        }
+    }
+}
+
+async fn set_backlight(kindle_manager: &KindleManager, intensity: u8) {
+    match kindle_manager.set_backlight(intensity).await {
+        Ok(_) => println!("Backlight set at \"{intensity}\""),
+        Err(err) => {
+            eprintln!("Failed to set backlight intensity!");
             eprintln!("{err}");
             process::exit(1);
         }

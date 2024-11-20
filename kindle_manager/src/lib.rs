@@ -1,6 +1,7 @@
 use std::{
     path::Path,
     process::{Command, Output},
+    u8,
 };
 
 use openssh::{KnownHosts, Session};
@@ -19,6 +20,9 @@ pub enum KindleManagerError {
 
     #[error("Command failed: {0}")]
     CommandError(String),
+
+    #[error("Argument out of allowed range: {0}")]
+    OutOfRange(String),
 }
 pub struct KindleManager {
     address: String,
@@ -214,6 +218,37 @@ impl KindleManager {
             ))),
         }
     }
+
+    pub async fn set_backlight(&self, intensity: u8) -> Result<(), KindleManagerError> {
+        // Intensity seems to be between 0..=255
+        // Higher values don't do anything more
+        let _ = self
+            .session
+            .command("sh")
+            .arg("-c")
+            .arg(format!(
+                "echo -n {} > /sys/devices/system/fl_tps6116x/fl_tps6116x0/fl_intensity",
+                intensity
+            ))
+            .output()
+            .await?
+            .check_stdout()?;
+
+        Ok(())
+    }
 }
 
-pub mod image_converter {}
+pub mod image_converter {
+    use std::path::PathBuf;
+
+    use crate::KindleManagerError;
+
+    pub fn convert_image(
+        background: &str,
+        origin: &PathBuf,
+        destination: &PathBuf,
+    ) -> Result<(), KindleManagerError> {
+        println!("Convertendo brrr broooo briiiii pipipi done.");
+        Ok(())
+    }
+}
