@@ -91,21 +91,21 @@ pub fn pull(filename: &str, target_location: &Path) {
 }
 
 // Appropriate error for when file wasn't found
-pub fn set(filename: &str) {
-    if file_exists(filename) {
-        Command::new("bash")
-            .arg("./kindle-manager.sh")
-            .arg("-a")
-            .arg("kindle")
-            .arg("--set")
-            .arg(filename)
-            .output()
-            .expect(format!("Failed to set '{}'!", filename).as_str())
-            .check_status();
-    } else {
-        panic!("File '{}' does not exist! Failed to set file!", filename);
-    }
-}
+// pub fn set(filename: &str) {
+//     if file_exists(filename) {
+//         Command::new("bash")
+//             .arg("./kindle-manager.sh")
+//             .arg("-a")
+//             .arg("kindle")
+//             .arg("--set")
+//             .arg(filename)
+//             .output()
+//             .expect(format!("Failed to set '{}'!", filename).as_str())
+//             .check_status();
+//     } else {
+//         panic!("File '{}' does not exist! Failed to set file!", filename);
+//     }
+// }
 
 // pub fn get_filenames() -> Vec<String> {
 //     let output = Command::new("bash")

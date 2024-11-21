@@ -230,15 +230,21 @@ async fn submit_image_form(
     // Push file to Kindle and set it
     km::push(&converted_image);
     if form.set_image {
-        km::set(&full_filename);
+        if let Err(err) = km.manager.set_image(&full_filename).await {
+            eprintln!("> Failed to set image!");
+            eprintln!("{err}");
+        }
     }
 
     Ok(oob_swap_server_images(km).await)
 }
 
 #[post("/set", data = "<image_name>")]
-async fn set_image(image_name: Form<TextForm>) -> Status {
-    km::set(&image_name.text);
+async fn set_image(image_name: Form<TextForm>, km: &State<KindleM>) -> Status {
+    if let Err(err) = km.manager.set_image(&image_name.text).await {
+        eprintln!("> Failed to set image!");
+        eprintln!("{err}");
+    }
     return Status::Ok;
 }
 
