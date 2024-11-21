@@ -80,7 +80,7 @@ enum BackgroundColor {
 #[tokio::main]
 async fn main() {
     let args = Cli::parse();
-    let kindle_manager = match KindleManager::new(args.address, args.location) {
+    let kindle_manager = match KindleManager::new(args.address, args.location).await {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Failed to create a session with the provided address.");

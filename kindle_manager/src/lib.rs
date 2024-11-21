@@ -51,11 +51,9 @@ impl CheckStdout for Output {
 }
 
 impl KindleManager {
-    pub fn new(address: String, location: String) -> Result<Self, KindleManagerError> {
+    pub async fn new(address: String, location: String) -> Result<Self, KindleManagerError> {
         // Create an openSSH session
-        let runtime = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
-        let session =
-            runtime.block_on(async { Session::connect_mux(&address, KnownHosts::Strict).await })?;
+        let session = Session::connect_mux(&address, KnownHosts::Strict).await?;
 
         Ok(KindleManager {
             address,

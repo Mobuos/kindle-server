@@ -3,7 +3,7 @@ use image_converter_wrapper as ic;
 mod kindle_manager_wrapper;
 use kindle_manager::{image_converter, KindleManager};
 use kindle_manager_wrapper as km;
-use rocket::{form, Request, State};
+use rocket::{form, tokio, Request, State};
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -322,7 +322,10 @@ fn rocket() -> _ {
 
     // TODO: Remove this hardcode
     // Start Kindle Manager
-    let manager = match KindleManager::new("kindle".into(), "/mnt/us/images".into()) {
+    let runtime = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
+    let manager = runtime
+        .block_on(async { KindleManager::new("kindle".into(), "/mnt/us/images".into()).await });
+    let manager = match manager {
         Ok(manager) => manager,
         Err(err) => {
             eprintln!("Failed to start Kindle Manager");
