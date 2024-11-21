@@ -394,6 +394,7 @@ fn rocket() -> _ {
         .mount("/images/", FileServer::from(relative!("../images")))
         .mount("/converted/", FileServer::from(relative!("../converted")))
         .mount("/static/", FileServer::from(relative!("/static")))
+        .mount("/", FileServer::from(relative!("/favicon")).rank(11))
         // Catchers
         .register("/", catchers![not_found])
 }
