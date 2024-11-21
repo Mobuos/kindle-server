@@ -1,8 +1,6 @@
 mod image_converter_wrapper;
 use image_converter_wrapper as ic;
-mod kindle_manager_wrapper;
 use kindle_manager::{image_converter, KindleManager};
-use kindle_manager_wrapper as km;
 use rocket::{form, tokio, Request, State};
 
 use std::collections::HashSet;
@@ -118,7 +116,6 @@ fn valid_filename<'v>(filename: &str) -> form::Result<'v, ()> {
 // }
 
 // ------- Routes ---------- //
-
 #[get("/")]
 async fn view_index(km: &State<KindleM>) -> Markup {
     match km.manager.list_files().await {
@@ -225,10 +222,19 @@ async fn submit_image_form(
             return Err(error);
         }
     }
-    let converted_image = PathBuf::from(format!("converted/{}", full_filename).as_str());
 
     // Push file to Kindle and set it
-    km::push(&converted_image);
+    if let Err(err) = km
+        .manager
+        .push_file(
+            &PathBuf::from(format!("converted/{}", full_filename)),
+            &full_filename,
+        )
+        .await
+    {
+        eprintln!("> Failed to push image!");
+        eprintln!("{err}");
+    }
     if form.set_image {
         if let Err(err) = km.manager.set_image(&full_filename).await {
             eprintln!("> Failed to set image!");
@@ -258,9 +264,17 @@ async fn sync(
             let kindle_images: HashSet<String> = HashSet::from_iter(image_names);
 
             // Check for images on the server that aren't on the kindle
-            for s_image in server_images.images.lock().unwrap().iter() {
-                if !kindle_images.contains(s_image) {
-                    km::push(Path::new(&format!("converted/{}", s_image)));
+            let images = server_images.images.lock().unwrap().clone();
+            for s_image in images {
+                if !kindle_images.contains(&s_image) {
+                    if let Err(err) = km
+                        .manager
+                        .push_file(Path::new(&format!("converted/{}", s_image)), &s_image)
+                        .await
+                    {
+                        eprintln!("> Failed to pull file!");
+                        eprintln!("{err}")
+                    }
                     println!("Missing {} in the kindle", s_image);
                 }
             }
