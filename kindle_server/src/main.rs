@@ -341,7 +341,7 @@ async fn delete_image(
 // Route /stats
 #[get("/battery")]
 async fn stats_battery(km: &State<KindleM>) -> Markup {
-    match km.manager.info_battery().await {
+    match km.manager.battery_charge().await {
         Ok(battery) => html! { "Battery: " (battery) "%" },
         Err(err) => {
             eprintln!("> Failed to get battery info");

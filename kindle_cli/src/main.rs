@@ -39,9 +39,11 @@ enum Commands {
     },
     /// Shows an image on screen from the specified location
     Set { filename: String },
-    /// Prints current battery percentage
+    /// Prints information about the current battery state
+    #[clap(visible_aliases = &["battery", "bat"])]
     BatteryInfo,
     /// Shows a debug message on screen
+    #[clap(visible_alias = "print")]
     DebugPrint { message: String },
     Backlight {
         #[arg(value_parser = clap::value_parser!(u8))]
@@ -201,14 +203,25 @@ async fn set_image(kindle_manager: &KindleManager, filename: &str) {
 }
 
 async fn info_battery(kindle_manager: &KindleManager) {
-    match kindle_manager.info_battery().await {
-        Ok(battery) => println!("Battery is at {battery}%"),
+    let charge = match kindle_manager.battery_charge().await {
+        Ok(charge) => charge,
         Err(err) => {
-            eprintln!("Failed to get battery info");
+            eprintln!("Failed to get battery charge");
             eprintln!("{err}");
             process::exit(1);
         }
-    }
+    };
+
+    let load = match kindle_manager.battery_load().await {
+        Ok(load) => load,
+        Err(err) => {
+            eprintln!("Failed to get battery load");
+            eprintln!("{err}");
+            process::exit(1);
+        }
+    };
+
+    println!("Battery is at {charge}% {load}");
 }
 
 async fn debug_print(kindle_manager: &KindleManager, text: &str) {

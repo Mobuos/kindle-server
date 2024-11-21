@@ -203,7 +203,7 @@ impl KindleManager {
         Ok(())
     }
 
-    pub async fn info_battery(&self) -> Result<u8, KindleManagerError> {
+    pub async fn battery_charge(&self) -> Result<u8, KindleManagerError> {
         let stdout = self
             .session
             .command("gasgauge-info")
@@ -219,6 +219,18 @@ impl KindleManager {
                 "Failed conversion of {stdout}: {err}"
             ))),
         }
+    }
+
+    pub async fn battery_load(&self) -> Result<String, KindleManagerError> {
+        let stdout = self
+            .session
+            .command("gasgauge-info")
+            .arg("-l")
+            .output()
+            .await?
+            .check_stdout()?;
+
+        Ok(stdout)
     }
 
     pub async fn set_backlight(&self, intensity: u8) -> Result<(), KindleManagerError> {
