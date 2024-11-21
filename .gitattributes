@@ -1,4 +1,4 @@
 # Linguist-generated would be more adequate, but it didn't seem to affect github stats
-static/tw.css linguist-vendored
+kindle_server/static/res/tw.css linguist-vendored
 # Consider rust templates as HTML
-src/templates/** linguist-language=html
+kindle_server/src/templates/** linguist-language=html
