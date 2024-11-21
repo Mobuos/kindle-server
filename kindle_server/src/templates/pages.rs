@@ -97,7 +97,7 @@ pub fn main(server_images: Option<&Vec<String>>) -> Markup {
                             // Explicit classes for tailwind css generation
                             @let colors = vec![
                                 ("bg-white", "text-white", "white"),
-                                ("bg-gray-300", "text-gray-300", "light-gray"),
+                                ("bg-gray-300", "text-gray-300", "light_gray"),
                                 ("bg-gray-600", "text-gray-600", "dark_gray"),
                                 ("bg-gray-800", "text-gray-800", "black"),
                             ];

@@ -1,5 +1,3 @@
-mod image_converter_wrapper;
-use image_converter_wrapper as ic;
 use kindle_manager::{image_converter, KindleManager};
 use rocket::{form, tokio, Request, State};
 
@@ -194,7 +192,7 @@ async fn submit_image_form(
     }
 
     // Get Background Color
-    println!("------------------{}", form.background_color);
+    println!("---------------------- {}", form.background_color);
     let bg_color = match form.background_color {
         "white" => "white",
         "light_gray" => "gray60",
@@ -202,11 +200,15 @@ async fn submit_image_form(
         "black" => "black",
         _ => "white",
     };
-    println!("-------------matched: {}", bg_color);
+    println!("------------- matched: {}", bg_color);
 
     // TODO: Allow changing background fill - Enum for background
     // Convert image to Kindle-appropriate format
-    match ic::convert(&format!("images/{}", full_filename), &bg_color) {
+    match image_converter::convert_image(
+        &bg_color,
+        &PathBuf::from(format!("images/{full_filename}")),
+        &PathBuf::from(format!("converted/{full_filename}")),
+    ) {
         Ok(_) => {
             server_images
                 .images
@@ -219,7 +221,7 @@ async fn submit_image_form(
                 "Problem converting {} to proper kindle-readable format: {:?}",
                 user_filename, error
             );
-            return Err(error);
+            return Err(std::io::Error::other("Failed conversion"));
         }
     }
 

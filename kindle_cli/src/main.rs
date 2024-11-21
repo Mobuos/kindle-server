@@ -117,7 +117,7 @@ async fn convert_image(background: BackgroundColor, origin: &PathBuf, destinatio
         BackgroundColor::Black => "black",
     };
 
-    match image_converter::convert_image(color, origin, destination).await {
+    match image_converter::convert_image(color, origin, destination) {
         Ok(_) => println!("Converted successfully"),
         Err(err) => {
             eprintln!("Failed to convert the image!");

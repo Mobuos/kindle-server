@@ -246,7 +246,7 @@ pub mod image_converter {
     use crate::{CheckStdout, KindleManagerError};
 
     // TODO: Check if the raster library can replace this
-    pub async fn convert_image(
+    pub fn convert_image(
         background: &str,
         origin: &PathBuf,
         destination: &PathBuf,
@@ -258,6 +258,8 @@ pub mod image_converter {
                 "LanczosSharp",
                 "-resize",
                 "758x1024",
+                "-background",
+                background,
                 "-gravity",
                 "center",
                 "-extent",
@@ -275,8 +277,6 @@ pub mod image_converter {
                 "-define",
                 "png:bit-depth=8",
             ])
-            .arg("-background")
-            .arg(background)
             .arg(destination)
             .output()?
             .check_stdout()?;
