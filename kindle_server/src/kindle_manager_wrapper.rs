@@ -107,22 +107,22 @@ pub fn set(filename: &str) {
     }
 }
 
-pub fn get_filenames() -> Vec<String> {
-    let output = Command::new("bash")
-        .arg("./kindle-manager.sh")
-        .arg("-a")
-        .arg("kindle")
-        .arg("--get-all")
-        .output()
-        .expect("Failed to get images on Kindle");
+// pub fn get_filenames() -> Vec<String> {
+//     let output = Command::new("bash")
+//         .arg("./kindle-manager.sh")
+//         .arg("-a")
+//         .arg("kindle")
+//         .arg("--get-all")
+//         .output()
+//         .expect("Failed to get images on Kindle");
 
-    let stdout = String::from_utf8(output.stdout).unwrap();
-    stdout
-        .split('\n')
-        .map(|s| s.to_string())
-        .filter(|s| !s.is_empty())
-        .collect()
-}
+//     let stdout = String::from_utf8(output.stdout).unwrap();
+//     stdout
+//         .split('\n')
+//         .map(|s| s.to_string())
+//         .filter(|s| !s.is_empty())
+//         .collect()
+// }
 
 // pub fn delete_image(filename: &str) {
 //     if file_exists(filename) {

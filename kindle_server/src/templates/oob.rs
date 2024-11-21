@@ -11,12 +11,10 @@ use crate::templates::elements;
 // Maybe we will need to do this some other way in the future, if I add something like
 // "pinned items", but we will cross that bridge when we come to it, for now on my browser
 // it seems to recognize the repeat images and just caches them, so no big problem for now
-pub fn swap_server_images(server_images: &Vec<String>) -> Markup {
+pub fn swap_server_images(server_images: Option<&Vec<String>>) -> Markup {
     html! {
         #server-images hx-swap-oob="innerHTML" {
-            @for filename in server_images {
-                (elements::show_image(filename))
-            }
+            (elements::server_images(server_images))
         }
         (self::force_update_file_count())
     }

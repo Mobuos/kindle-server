@@ -74,6 +74,18 @@ fn get_server_images() -> impl Iterator<Item = String> {
         })
 }
 
+/// Updates list of images on main page
+async fn oob_swap_server_images(km: &State<KindleM>) -> Markup {
+    match km.manager.list_files().await {
+        Ok(image_names) => oob::swap_server_images(Some(&image_names)),
+        Err(err) => {
+            eprintln!("> Failed to acquire image names");
+            eprintln!("{err}");
+            oob::swap_server_images(None)
+        }
+    }
+}
+
 // ------- Validation --------- //
 
 fn valid_filename<'v>(filename: &str) -> form::Result<'v, ()> {
@@ -108,15 +120,22 @@ fn valid_filename<'v>(filename: &str) -> form::Result<'v, ()> {
 // ------- Routes ---------- //
 
 #[get("/")]
-fn view_index() -> Markup {
-    let filenames = km::get_filenames();
-    pages::main(&filenames)
+async fn view_index(km: &State<KindleM>) -> Markup {
+    match km.manager.list_files().await {
+        Ok(filenames) => pages::main(Some(&filenames)),
+        Err(err) => {
+            eprintln!("> Failed to acquire filenames");
+            eprintln!("{err}");
+            pages::main(None)
+        }
+    }
 }
 
 #[post("/", data = "<form>")]
 async fn submit_image_form(
     mut form: Form<UploadImage<'_>>,
     server_images: &State<ServerImages>,
+    km: &State<KindleM>,
 ) -> Result<Markup, io::Error> {
     // Save file to server
     let og_file_extension = form
@@ -213,8 +232,8 @@ async fn submit_image_form(
     if form.set_image {
         km::set(&full_filename);
     }
-    let image_names = km::get_filenames();
-    return Ok(oob::swap_server_images(&image_names));
+
+    Ok(oob_swap_server_images(km).await)
 }
 
 #[post("/set", data = "<image_name>")]
@@ -224,29 +243,40 @@ async fn set_image(image_name: Form<TextForm>) -> Status {
 }
 
 #[post("/sync")]
-async fn sync(server_images: &State<ServerImages>) -> Result<Markup, io::Error> {
-    let image_names = km::get_filenames();
-    let kindle_images: HashSet<String> = HashSet::from_iter(image_names);
+async fn sync(
+    server_images: &State<ServerImages>,
+    km: &State<KindleM>,
+) -> Result<Markup, io::Error> {
+    match km.manager.list_files().await {
+        Ok(image_names) => {
+            let kindle_images: HashSet<String> = HashSet::from_iter(image_names);
 
-    // Check for images on the server that aren't on the kindle
-    for s_image in server_images.images.lock().unwrap().iter() {
-        if !kindle_images.contains(s_image) {
-            km::push(Path::new(&format!("converted/{}", s_image)));
-            println!("Missing {} in the kindle", s_image);
+            // Check for images on the server that aren't on the kindle
+            for s_image in server_images.images.lock().unwrap().iter() {
+                if !kindle_images.contains(s_image) {
+                    km::push(Path::new(&format!("converted/{}", s_image)));
+                    println!("Missing {} in the kindle", s_image);
+                }
+            }
+
+            // Check for images on the Kindle that aren't on the server
+            for k_image in &kindle_images {
+                if !server_images.images.lock().unwrap().contains(k_image) {
+                    km::pull(k_image, Path::new("converted/"));
+                    println!("Missing {} in the server", k_image);
+                }
+            }
+            // Check kindle again for updated images
+            Ok(oob_swap_server_images(km).await)
+        }
+        Err(err) => {
+            eprintln!(
+                "> Failed to acquire list of images on the Kindle, cancelling the Sync operation"
+            );
+            eprintln!("{err}");
+            Ok(oob::swap_server_images(None))
         }
     }
-
-    // Check for images on the Kindle that aren't on the server
-    for k_image in &kindle_images {
-        if !server_images.images.lock().unwrap().contains(k_image) {
-            km::pull(k_image, Path::new("converted/"));
-            println!("Missing {} in the server", k_image);
-        }
-    }
-
-    // Check kindle again for updated images
-    let image_names = km::get_filenames();
-    return Ok(oob::swap_server_images(&image_names));
 }
 
 #[delete("/<filename>")]
@@ -275,7 +305,8 @@ async fn delete_image(
         eprintln!("> Failed to delete file!");
         eprintln!("{err}");
     }
-    Ok(oob::force_update_file_count())
+
+    Ok(oob_swap_server_images(km).await)
 }
 
 // Route /stats
@@ -292,8 +323,16 @@ async fn stats_battery(km: &State<KindleM>) -> Markup {
 }
 
 #[get("/files")]
-async fn stats_files() -> Markup {
-    let count_kindle = km::get_filenames().len();
+async fn stats_files(km: &State<KindleM>) -> Markup {
+    let count_kindle = match km.manager.list_files().await {
+        Ok(images) => format!("{}", images.len()),
+        Err(err) => {
+            eprintln!("> Failed to get number of files on the Kindle");
+            eprintln!("{err}");
+            "??".into()
+        }
+    };
+    // let count_kindle = km::get_filenames().len();
     let count_server = fs::read_dir("converted").unwrap().count();
     html! { ."text-white/70" { "Kindle/Server files: " (count_kindle)"/"(count_server) }}
 }

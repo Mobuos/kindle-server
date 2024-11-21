@@ -67,6 +67,30 @@ pub fn base(title: &str, content: Markup) -> Markup {
     }
 }
 
+pub fn server_images(images: Option<&Vec<String>>) -> Markup {
+    html! {
+        @match images {
+            Some(images) if !images.is_empty() => {
+                .grid."grid-cols-2"."sm:grid-cols-4"."md:grid-cols-5".gap-x-3.gap-y-5{
+                    @for filename in images {
+                        (self::show_image(filename))
+                    }
+                }
+            }
+            Some(_) => {
+                .mx-auto.max-w-screen-sm.text-center {
+                    p .mb-4.text-lg.font-light.text-gray-500 { "No images found on the Kindle!" }
+                }
+            }
+            None => {
+                .mx-auto.max-w-screen-sm.text-center {
+                    p .mb-4.text-lg.font-light.text-gray-500 { "Failed to get images from the Kindle!" }
+                }
+            }
+        }
+    }
+}
+
 pub fn show_image(filename: &str) -> Markup {
     let image_name = filename.split(".").next().unwrap_or(filename);
     html! {
