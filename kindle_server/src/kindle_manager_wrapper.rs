@@ -72,23 +72,23 @@ pub fn push(file: &Path) {
 }
 
 // TODO: Appropriate error for when file doesn't exist
-pub fn pull(filename: &str, target_location: &Path) {
-    if !file_exists(filename) {
-        println!("File doesn't exist! Not pulling");
-        panic!();
-    }
+// pub fn pull(filename: &str, target_location: &Path) {
+//     if !file_exists(filename) {
+//         println!("File doesn't exist! Not pulling");
+//         panic!();
+//     }
 
-    Command::new("bash")
-        .arg("./kindle-manager.sh")
-        .arg("-a")
-        .arg("kindle")
-        .arg("--pull")
-        .arg(filename)
-        .arg(target_location)
-        .output()
-        .expect(format!("Failed to pull {}!", filename).as_str())
-        .check_status();
-}
+//     Command::new("bash")
+//         .arg("./kindle-manager.sh")
+//         .arg("-a")
+//         .arg("kindle")
+//         .arg("--pull")
+//         .arg(filename)
+//         .arg(target_location)
+//         .output()
+//         .expect(format!("Failed to pull {}!", filename).as_str())
+//         .check_status();
+// }
 
 // Appropriate error for when file wasn't found
 // pub fn set(filename: &str) {

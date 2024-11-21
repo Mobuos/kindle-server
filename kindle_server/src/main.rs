@@ -268,7 +268,14 @@ async fn sync(
             // Check for images on the Kindle that aren't on the server
             for k_image in &kindle_images {
                 if !server_images.images.lock().unwrap().contains(k_image) {
-                    km::pull(k_image, Path::new("converted/"));
+                    if let Err(err) = km
+                        .manager
+                        .pull_file(&k_image, Path::new(&format!("converted/{k_image}")))
+                        .await
+                    {
+                        eprintln!("> Failed to push file!");
+                        eprintln!("{err}")
+                    }
                     println!("Missing {} in the server", k_image);
                 }
             }
