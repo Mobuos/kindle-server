@@ -169,11 +169,18 @@ async fn submit_image_form(
     // Convert image to png in the server if it's not a PNG already
     if form.file.content_type() != Some(&ContentType::PNG) {
         println!("Submitted image is being converted into a PNG");
-        Command::new("magick")
+        let output = Command::new("magick")
             .arg(format!("images/{}", full_filename))
             .arg(format!("images/{}.png", user_filename))
             .output()
             .expect("Failed to convert image to PNG");
+        if !output.status.success() {
+            let stdout = String::from_utf8(output.stdout).unwrap();
+            let stderr = String::from_utf8(output.stderr).unwrap();
+
+            eprintln!("out: {stdout}");
+            eprintln!("err: {stderr}");
+        }
         fs::remove_file(format!("images/{}", full_filename)).expect(&format!(
             "Failed to delete original file \"{}\"",
             full_filename

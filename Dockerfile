@@ -6,6 +6,15 @@ COPY . .
 RUN apk update && apk add --no-cache \
     musl-dev \
     imagemagick \
+    imagemagick-dev \
+    imagemagick-libs \
+    # Image format delegates
+    jpeg-dev \
+    libpng-dev \
+    libjpeg-turbo \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    tiff-dev \
     openssh
 
 # Create directories and set permissions
