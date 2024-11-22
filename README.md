@@ -35,6 +35,11 @@ To run the server:
 cargo run -p kindle_server
 ```
 
+To run the CLI:
+```bash
+cargo run -p kindle_cli -- help
+```
+
 To constantly re-run the server after changes:
 ```bash
 cargo-watch -q -c -x 'run -p kindle_server'
