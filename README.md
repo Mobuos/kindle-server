@@ -8,19 +8,17 @@ To run this project you need a jailbroken Kindle, configured to allow SSH connec
 
 ![Kindle Server UI](https://github.com/user-attachments/assets/d0a9d76d-494c-45ba-b956-5575b51752ce)
 
-<!-- TODO: Adapt the Dockerfile to work with the newest changes -->
-<!-- 
 ---
 
 You will also need a computer acting as a server, here's how I run the docker container:
 
 ```bash
-docker build kindle_server/ -t kindle_server
-docker run -d -p 7070:8000 -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v ~/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro -v ~/.ssh/known_hosts:/root/.ssh/known_hosts:ro --name kindle kindle_server
+docker build . -t kindle_server
+docker run -d -p 8000:8000 -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-agent -v ~/.ssh/id_ed25519:/root/.ssh/id_ed25519:ro -v ~/.ssh/known_hosts:/root/.ssh/known_hosts:ro --name kindle kindle_server
 ```
 
 **Note:** This will copy your `id_ed25519` key to the container, and forward your ssh-agent to avoid having to input a passphrase inside the container as well, adapt the command to fit your needs. Depending on how your server is set-up you might need to manually login into it and unlock the ssh key before running the server.
--->
+
 --- 
 
 For development, inside the `kindle_server` folder:
