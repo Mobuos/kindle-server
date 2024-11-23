@@ -52,8 +52,9 @@ pub fn base(title: &str, content: Markup) -> Markup {
     html! {
         (DOCTYPE)
         head {
-            meta charset="utf-8";
             title { "KS - " (title)}
+            meta charset="utf-8";
+            meta name="viewport" content="width=device-width, initial-scale=1.0"
             script src="static/helper.js" {}
             script src="https://unpkg.com/htmx.org@1.9.4" integrity="sha384-zUfuhFKKZCbHTY6aRR46gxiqszMk5tcHjsVFxnUo8VMus4kHGVdIYVbOYYNlKmHV" crossorigin="anonymous" {}
             link rel="stylesheet" href="/static/tw.css";
