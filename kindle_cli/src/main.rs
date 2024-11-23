@@ -85,7 +85,8 @@ enum BackgroundColor {
 async fn main() {
     let args = Cli::parse();
 
-    
+    let kindle_manager = KindleManager::new(args.address, args.location);
+
     match args.command {
         Commands::Convert { original_path, 
             final_path, 
@@ -93,35 +94,31 @@ async fn main() {
             stretch} => {
                 convert_image(background, stretch, &original_path, &final_path).await;
             },
-        command => {
-            // For all other commands, initialize KindleManager
-            let kindle_manager = match KindleManager::new(args.address, args.location).await {
-                Ok(manager) => manager,
-                Err(err) => {
-                    eprintln!("Failed to create a session with the provided address.");
-                    eprintln!("{err}");
-                    process::exit(1);
-                }
-            };
-            
-            match command {
-                Commands::Prep => prep(&kindle_manager).await,
-                Commands::List => list_files(&kindle_manager).await,
-                Commands::Delete { filename } => delete_file(&kindle_manager, &filename).await,
-                Commands::Push {
-                    file_path,
-                    filename,
-                } => push_file(&kindle_manager, &file_path, &filename).await,
-                Commands::Pull {
-                    filename,
-                    file_path,
-                } => pull_file(&kindle_manager, &filename, &file_path).await,
-                Commands::Set { filename } => set_image(&kindle_manager, &filename).await,
-                Commands::BatteryInfo => info_battery(&kindle_manager).await,
-                Commands::DebugPrint { message } => debug_print(&kindle_manager, &message).await,
-                Commands::Backlight { intensity } => set_backlight(&kindle_manager, intensity).await,
-                _ => unreachable!()
-            }
+        Commands::Prep => prep(&kindle_manager).await,
+        Commands::List => list_files(&kindle_manager).await,
+        Commands::Delete { filename } => delete_file(&kindle_manager, &filename).await,
+        Commands::Push {
+            file_path,
+            filename,
+        } => push_file(&kindle_manager, &file_path, &filename).await,
+        Commands::Pull {
+            filename,
+            file_path,
+        } => pull_file(&kindle_manager, &filename, &file_path).await,
+        Commands::Set { filename } => set_image(&kindle_manager, &filename).await,
+        Commands::BatteryInfo => info_battery(&kindle_manager).await,
+        Commands::DebugPrint { message } => debug_print(&kindle_manager, &message).await,
+        Commands::Backlight { intensity } => set_backlight(&kindle_manager, intensity).await,
+    }
+}
+
+async fn new_session(kindle_manager: &KindleManager) -> openssh::Session{
+    match kindle_manager.new_session().await {
+        Ok(session) => session,
+        Err(err) => {
+            eprintln!("Failed to establish a connection with the Kindle");
+            eprintln!("{err}");
+            process::exit(1);
         }
     }
 }
@@ -145,7 +142,8 @@ async fn convert_image(background: BackgroundColor, stretch: bool, origin: &Path
 }
 
 async fn prep(kindle_manager: &KindleManager) {
-    match kindle_manager.prep().await {
+    let session = new_session(&kindle_manager).await;
+    match kindle_manager.prep(&session).await {
         Ok(_) => println!("Kindle is prepared to show images now"),
         Err(err) => {
             eprintln!("Failed to prepare the Kindle. Restart it before trying again");
@@ -156,7 +154,8 @@ async fn prep(kindle_manager: &KindleManager) {
 }
 
 async fn list_files(kindle_manager: &KindleManager) {
-    match kindle_manager.list_files().await {
+    let session = new_session(&kindle_manager).await;
+    match kindle_manager.list_files(&session).await {
         Ok(files) => {
             if files.is_empty() {
                 println!("No files found!")
@@ -175,7 +174,8 @@ async fn list_files(kindle_manager: &KindleManager) {
 }
 
 async fn delete_file(kindle_manager: &KindleManager, filename: &str) {
-    if let Err(err) = kindle_manager.delete_file(filename).await {
+    let session = new_session(&kindle_manager).await;
+    if let Err(err) = kindle_manager.delete_file(&session, filename).await {
         eprintln!("Failed to delete \"{filename}\"");
         eprintln!("{err}");
         process::exit(1);
@@ -185,7 +185,8 @@ async fn delete_file(kindle_manager: &KindleManager, filename: &str) {
 }
 
 async fn pull_file(kindle_manager: &KindleManager, filename: &str, file_path: &PathBuf) {
-    match kindle_manager.pull_file(filename, file_path).await {
+    let session = new_session(&kindle_manager).await;
+    match kindle_manager.pull_file(&session, filename, file_path).await {
         Ok(_) => println!("Pulled \"{filename}\""),
         Err(err) => {
             eprintln!("Failed to pull file");
@@ -196,7 +197,8 @@ async fn pull_file(kindle_manager: &KindleManager, filename: &str, file_path: &P
 }
 
 async fn push_file(kindle_manager: &KindleManager, file_path: &PathBuf, filename: &str) {
-    match kindle_manager.push_file(file_path, filename).await {
+    let session = new_session(&kindle_manager).await;
+    match kindle_manager.push_file(&session, file_path, filename).await {
         Ok(_) => println!("Pushed \"{filename}\""),
         Err(err) => {
             eprintln!("Failed to push file");
@@ -207,7 +209,8 @@ async fn push_file(kindle_manager: &KindleManager, file_path: &PathBuf, filename
 }
 
 async fn set_image(kindle_manager: &KindleManager, filename: &str) {
-    match kindle_manager.set_image(filename).await {
+    let session = new_session(&kindle_manager).await;
+    match kindle_manager.set_image(&session, filename).await {
         Ok(_) => println!("Image \"{filename}\" set"),
         Err(err) => {
             eprintln!("Failed to set image \"{filename}\"");
@@ -218,7 +221,8 @@ async fn set_image(kindle_manager: &KindleManager, filename: &str) {
 }
 
 async fn info_battery(kindle_manager: &KindleManager) {
-    let charge = match kindle_manager.battery_charge().await {
+    let session = new_session(&kindle_manager).await;
+    let charge = match kindle_manager.battery_charge(&session).await {
         Ok(charge) => charge,
         Err(err) => {
             eprintln!("Failed to get battery charge");
@@ -227,7 +231,7 @@ async fn info_battery(kindle_manager: &KindleManager) {
         }
     };
 
-    let load = match kindle_manager.battery_load().await {
+    let load = match kindle_manager.battery_load(&session).await {
         Ok(load) => load,
         Err(err) => {
             eprintln!("Failed to get battery load");
@@ -240,7 +244,8 @@ async fn info_battery(kindle_manager: &KindleManager) {
 }
 
 async fn debug_print(kindle_manager: &KindleManager, text: &str) {
-    match kindle_manager.debug_print(text).await {
+    let session = new_session(&kindle_manager).await;
+    match kindle_manager.debug_print(&session, text).await {
         Ok(_) => println!("Printed \"{text}\""),
         Err(err) => {
             eprintln!("Failed to print debug message!");
@@ -251,7 +256,8 @@ async fn debug_print(kindle_manager: &KindleManager, text: &str) {
 }
 
 async fn set_backlight(kindle_manager: &KindleManager, intensity: u8) {
-    match kindle_manager.set_backlight(intensity).await {
+    let session = new_session(&kindle_manager).await;
+    match kindle_manager.set_backlight(&session, intensity).await {
         Ok(_) => println!("Backlight set at \"{intensity}\""),
         Err(err) => {
             eprintln!("Failed to set backlight intensity!");

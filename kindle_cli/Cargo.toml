@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.20", features = ["derive"] }
 kindle_manager = { path = "../kindle_manager" }
+openssh = "0.11.3"
 tokio = { version = "1.41.1", features = ["full"] }

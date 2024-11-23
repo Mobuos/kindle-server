@@ -1,5 +1,5 @@
 use kindle_manager::{image_converter, KindleManager};
-use rocket::{form, tokio, Request, State};
+use rocket::{form, Request, State};
 
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -71,8 +71,8 @@ fn get_server_images() -> impl Iterator<Item = String> {
 }
 
 /// Updates list of images on main page
-async fn oob_swap_server_images(km: &State<KindleM>) -> Markup {
-    match km.manager.list_files().await {
+async fn oob_swap_server_images(km: &State<KindleM>, session: &openssh::Session) -> Markup {
+    match km.manager.list_files(&session).await {
         Ok(image_names) => oob::swap_server_images(Some(&image_names)),
         Err(err) => {
             eprintln!("> Failed to acquire image names");
@@ -116,10 +116,18 @@ fn valid_filename<'v>(filename: &str) -> form::Result<'v, ()> {
 // ------- Routes ---------- //
 #[get("/")]
 async fn view_index(km: &State<KindleM>) -> Markup {
-    match km.manager.list_files().await {
-        Ok(filenames) => pages::main(Some(&filenames)),
+    let session = km.manager.new_session().await;
+    match session {
+        Ok(session) => match km.manager.list_files(&session).await {
+            Ok(filenames) => pages::main(Some(&filenames)),
+            Err(err) => {
+                eprintln!("> Failed to acquire filenames");
+                eprintln!("{err}");
+                pages::main(None)
+            }
+        },
         Err(err) => {
-            eprintln!("> Failed to acquire filenames");
+            eprintln!("> Failed to create SSH session");
             eprintln!("{err}");
             pages::main(None)
         }
@@ -132,6 +140,13 @@ async fn submit_image_form(
     server_images: &State<ServerImages>,
     km: &State<KindleM>,
 ) -> Result<Markup, io::Error> {
+    // Establish connection to Kindle
+    let session = km
+        .manager
+        .new_session()
+        .await
+        .expect("Failed to create SSH session");
+
     // Save file to server
     let og_file_extension = form
         .file
@@ -244,6 +259,7 @@ async fn submit_image_form(
     if let Err(err) = km
         .manager
         .push_file(
+            &session,
             &PathBuf::from(format!("converted/{}", full_filename)),
             &full_filename,
         )
@@ -253,18 +269,23 @@ async fn submit_image_form(
         eprintln!("{err}");
     }
     if form.set_image {
-        if let Err(err) = km.manager.set_image(&full_filename).await {
+        if let Err(err) = km.manager.set_image(&session, &full_filename).await {
             eprintln!("> Failed to set image!");
             eprintln!("{err}");
         }
     }
 
-    Ok(oob_swap_server_images(km).await)
+    Ok(oob_swap_server_images(km, &session).await)
 }
 
 #[post("/set", data = "<image_name>")]
 async fn set_image(image_name: Form<TextForm>, km: &State<KindleM>) -> Status {
-    if let Err(err) = km.manager.set_image(&image_name.text).await {
+    let session = km
+        .manager
+        .new_session()
+        .await
+        .expect("Failed to create SSH session");
+    if let Err(err) = km.manager.set_image(&session, &image_name.text).await {
         eprintln!("> Failed to set image!");
         eprintln!("{err}");
     }
@@ -276,7 +297,12 @@ async fn sync(
     server_images: &State<ServerImages>,
     km: &State<KindleM>,
 ) -> Result<Markup, io::Error> {
-    match km.manager.list_files().await {
+    let session = km
+        .manager
+        .new_session()
+        .await
+        .expect("Failed to create SSH session");
+    match km.manager.list_files(&session).await {
         Ok(image_names) => {
             let kindle_images: HashSet<String> = HashSet::from_iter(image_names);
 
@@ -286,7 +312,11 @@ async fn sync(
                 if !kindle_images.contains(&s_image) {
                     if let Err(err) = km
                         .manager
-                        .push_file(Path::new(&format!("converted/{}", s_image)), &s_image)
+                        .push_file(
+                            &session,
+                            Path::new(&format!("converted/{}", s_image)),
+                            &s_image,
+                        )
                         .await
                     {
                         eprintln!("> Failed to pull file!");
@@ -301,7 +331,11 @@ async fn sync(
                 if !server_images.images.lock().unwrap().contains(k_image) {
                     if let Err(err) = km
                         .manager
-                        .pull_file(&k_image, Path::new(&format!("converted/{k_image}")))
+                        .pull_file(
+                            &session,
+                            &k_image,
+                            Path::new(&format!("converted/{k_image}")),
+                        )
                         .await
                     {
                         eprintln!("> Failed to push file!");
@@ -311,7 +345,7 @@ async fn sync(
                 }
             }
             // Check kindle again for updated images
-            Ok(oob_swap_server_images(km).await)
+            Ok(oob_swap_server_images(km, &session).await)
         }
         Err(err) => {
             eprintln!(
@@ -329,6 +363,11 @@ async fn delete_image(
     server_images: &State<ServerImages>,
     km: &State<KindleM>,
 ) -> Result<Markup, io::Error> {
+    let session = km
+        .manager
+        .new_session()
+        .await
+        .expect("Failed to create SSH session");
     match fs::remove_file(format!("converted/{}", filename)) {
         Ok(_) => {
             server_images.images.lock().unwrap().remove(filename);
@@ -345,18 +384,23 @@ async fn delete_image(
         }
     }
 
-    if let Err(err) = km.manager.delete_file(filename).await {
+    if let Err(err) = km.manager.delete_file(&session, filename).await {
         eprintln!("> Failed to delete file!");
         eprintln!("{err}");
     }
 
-    Ok(oob_swap_server_images(km).await)
+    Ok(oob_swap_server_images(km, &session).await)
 }
 
 // Route /stats
 #[get("/battery")]
 async fn stats_battery(km: &State<KindleM>) -> Markup {
-    match km.manager.battery_charge().await {
+    let session = km
+        .manager
+        .new_session()
+        .await
+        .expect("Failed to create SSH session");
+    match km.manager.battery_charge(&session).await {
         Ok(battery) => html! { "Battery: " (battery) "%" },
         Err(err) => {
             eprintln!("> Failed to get battery info");
@@ -368,7 +412,12 @@ async fn stats_battery(km: &State<KindleM>) -> Markup {
 
 #[get("/files")]
 async fn stats_files(km: &State<KindleM>) -> Markup {
-    let count_kindle = match km.manager.list_files().await {
+    let session = km
+        .manager
+        .new_session()
+        .await
+        .expect("Failed to create SSH session");
+    let count_kindle = match km.manager.list_files(&session).await {
         Ok(images) => format!("{}", images.len()),
         Err(err) => {
             eprintln!("> Failed to get number of files on the Kindle");
@@ -403,25 +452,14 @@ fn rocket() -> _ {
         panic!("{error}");
     }
 
-    // TODO: Remove this hardcode
-    // Start Kindle Manager
-    let runtime = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
-    let manager = runtime
-        .block_on(async { KindleManager::new("kindle".into(), "/mnt/us/images".into()).await });
-    let manager = match manager {
-        Ok(manager) => manager,
-        Err(err) => {
-            eprintln!("Failed to start Kindle Manager");
-            panic!("{err}");
-        }
-    };
-
     rocket::build()
         // State
         .manage(ServerImages {
             images: Mutex::new(HashSet::from_iter(get_server_images())),
         })
-        .manage(KindleM { manager })
+        .manage(KindleM {
+            manager: KindleManager::new("kindle".into(), "/mnt/us/images".into()),
+        })
         // Routes
         .mount(
             "/",

@@ -28,7 +28,6 @@ pub enum KindleManagerError {
 #[derive(Debug)]
 pub struct KindleManager {
     address: String,
-    session: Session,
     location: String,
 }
 
@@ -51,20 +50,20 @@ impl CheckStdout for Output {
 }
 
 impl KindleManager {
-    pub async fn new(address: String, location: String) -> Result<Self, KindleManagerError> {
-        // Create an openSSH session
-        let session = Session::connect_mux(&address, KnownHosts::Strict).await?;
-
-        Ok(KindleManager {
-            address,
-            session,
-            location,
-        })
+    pub fn new(address: String, location: String) -> Self {
+        KindleManager { address, location }
     }
 
-    pub async fn debug_print(&self, text: &str) -> Result<(), KindleManagerError> {
-        let _ = self
-            .session
+    pub async fn new_session(&self) -> Result<Session, KindleManagerError> {
+        Ok(Session::connect_mux(&self.address, KnownHosts::Strict).await?)
+    }
+
+    pub async fn debug_print(
+        &self,
+        session: &Session,
+        text: &str,
+    ) -> Result<(), KindleManagerError> {
+        let _ = session
             .command("fbink")
             .arg("-q")
             .arg(text)
@@ -73,22 +72,22 @@ impl KindleManager {
             .output()
             .await?
             .check_stdout()?;
+
         Ok(())
     }
 
     // Credit to https://github.com/mattzzw/kindle-clock
     /// Prepares the Kindle to act as a display, disabling services to save power,
     /// entering power-saving mode and disabling the screen-saver.
-    pub async fn prep(&self) -> Result<(), KindleManagerError> {
+    pub async fn prep(&self, session: &Session) -> Result<(), KindleManagerError> {
         // TODO: Check if we can stop framework and powerd
         let services_to_stop = ["lab126_gui", "otaupd", "phd", "tmd", "x", "todo"];
         for service in services_to_stop {
-            self.stop_service(service).await?;
+            self.stop_service(&session, service).await?;
         }
 
         // Set lowest CPU clock
-        let _ = self
-            .session
+        let _ = session
             .command("sh")
             .arg("-c")
             .arg("echo powersave > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor")
@@ -97,8 +96,7 @@ impl KindleManager {
             .check_stdout()?;
 
         // Disable Screensaver
-        let _ = self
-            .session
+        let _ = session
             .command("sh")
             .arg("-c")
             .arg("lipc-set-prop com.lab126.powerd preventScreenSaver 1")
@@ -109,9 +107,12 @@ impl KindleManager {
         Ok(())
     }
 
-    async fn stop_service(&self, service: &str) -> Result<(), KindleManagerError> {
-        let _ = self
-            .session
+    async fn stop_service(
+        &self,
+        session: &Session,
+        service: &str,
+    ) -> Result<(), KindleManagerError> {
+        let _ = session
             .command("stop")
             .arg(service)
             .output()
@@ -121,9 +122,8 @@ impl KindleManager {
         Ok(())
     }
 
-    pub async fn list_files(&self) -> Result<Vec<String>, KindleManagerError> {
-        let stdout = self
-            .session
+    pub async fn list_files(&self, session: &Session) -> Result<Vec<String>, KindleManagerError> {
+        let stdout = session
             .command("ls")
             .arg(&self.location)
             .output()
@@ -141,10 +141,11 @@ impl KindleManager {
 
     pub async fn push_file(
         &self,
+        session: &Session,
         local_file_path: &Path,
         kindle_filename: &str,
     ) -> Result<(), KindleManagerError> {
-        self.session.check().await?;
+        session.check().await?;
         let _ = Command::new("scp")
             .arg(local_file_path)
             .arg(format!(
@@ -159,10 +160,11 @@ impl KindleManager {
 
     pub async fn pull_file(
         &self,
+        session: &Session,
         kindle_filename: &str,
         local_file_path: &Path,
     ) -> Result<(), KindleManagerError> {
-        self.session.check().await?;
+        session.check().await?;
         let _ = Command::new("scp")
             .arg(format!(
                 "{}:{}/{}",
@@ -175,9 +177,12 @@ impl KindleManager {
         Ok(())
     }
 
-    pub async fn delete_file(&self, kindle_filename: &str) -> Result<(), KindleManagerError> {
-        let _ = self
-            .session
+    pub async fn delete_file(
+        &self,
+        session: &Session,
+        kindle_filename: &str,
+    ) -> Result<(), KindleManagerError> {
+        let _ = session
             .command("rm")
             .arg(format!("{}/{}", self.location, kindle_filename))
             .output()
@@ -187,9 +192,12 @@ impl KindleManager {
         Ok(())
     }
 
-    pub async fn set_image(&self, filename: &str) -> Result<(), KindleManagerError> {
-        let _ = self
-            .session
+    pub async fn set_image(
+        &self,
+        session: &Session,
+        filename: &str,
+    ) -> Result<(), KindleManagerError> {
+        let _ = session
             .command("sh")
             .arg("-c")
             .arg(format!(
@@ -203,9 +211,8 @@ impl KindleManager {
         Ok(())
     }
 
-    pub async fn battery_charge(&self) -> Result<u8, KindleManagerError> {
-        let stdout = self
-            .session
+    pub async fn battery_charge(&self, session: &Session) -> Result<u8, KindleManagerError> {
+        let stdout = session
             .command("gasgauge-info")
             .arg("-c")
             .output()
@@ -221,9 +228,8 @@ impl KindleManager {
         }
     }
 
-    pub async fn battery_load(&self) -> Result<String, KindleManagerError> {
-        let stdout = self
-            .session
+    pub async fn battery_load(&self, session: &Session) -> Result<String, KindleManagerError> {
+        let stdout = session
             .command("gasgauge-info")
             .arg("-l")
             .output()
@@ -233,11 +239,14 @@ impl KindleManager {
         Ok(stdout)
     }
 
-    pub async fn set_backlight(&self, intensity: u8) -> Result<(), KindleManagerError> {
+    pub async fn set_backlight(
+        &self,
+        session: &Session,
+        intensity: u8,
+    ) -> Result<(), KindleManagerError> {
         // Intensity seems to be between 0..=255
         // Higher values don't do anything more
-        let _ = self
-            .session
+        let _ = session
             .command("sh")
             .arg("-c")
             .arg(format!(
