@@ -66,6 +66,8 @@ enum Commands {
             value_enum
         )]
         background: BackgroundColor,
+        #[clap(long, short, action)]
+        stretch: bool,
     },
 }
 
@@ -82,36 +84,49 @@ enum BackgroundColor {
 #[tokio::main]
 async fn main() {
     let args = Cli::parse();
-    let kindle_manager = match KindleManager::new(args.address, args.location).await {
-        Ok(manager) => manager,
-        Err(err) => {
-            eprintln!("Failed to create a session with the provided address.");
-            eprintln!("{err}");
-            process::exit(1);
-        }
-    };
 
+    
     match args.command {
-        Commands::Prep => prep(&kindle_manager).await,
-        Commands::List => list_files(&kindle_manager).await,
-        Commands::Delete { filename } => delete_file(&kindle_manager, &filename).await,
-        Commands::Push {
-            file_path,
-            filename,
-        } => push_file(&kindle_manager, &file_path, &filename).await,
-        Commands::Pull {
-            filename,
-            file_path,
-        } => pull_file(&kindle_manager, &filename, &file_path).await,
-        Commands::Set { filename } => set_image(&kindle_manager, &filename).await,
-        Commands::BatteryInfo => info_battery(&kindle_manager).await,
-        Commands::DebugPrint { message } => debug_print(&kindle_manager, &message).await,
-        Commands::Backlight { intensity } => set_backlight(&kindle_manager, intensity).await,
-        Commands::Convert { original_path, final_path, background } => convert_image(background, &original_path, &final_path).await,
+        Commands::Convert { original_path, 
+            final_path, 
+            background , 
+            stretch} => {
+                convert_image(background, stretch, &original_path, &final_path).await;
+            },
+        command => {
+            // For all other commands, initialize KindleManager
+            let kindle_manager = match KindleManager::new(args.address, args.location).await {
+                Ok(manager) => manager,
+                Err(err) => {
+                    eprintln!("Failed to create a session with the provided address.");
+                    eprintln!("{err}");
+                    process::exit(1);
+                }
+            };
+            
+            match command {
+                Commands::Prep => prep(&kindle_manager).await,
+                Commands::List => list_files(&kindle_manager).await,
+                Commands::Delete { filename } => delete_file(&kindle_manager, &filename).await,
+                Commands::Push {
+                    file_path,
+                    filename,
+                } => push_file(&kindle_manager, &file_path, &filename).await,
+                Commands::Pull {
+                    filename,
+                    file_path,
+                } => pull_file(&kindle_manager, &filename, &file_path).await,
+                Commands::Set { filename } => set_image(&kindle_manager, &filename).await,
+                Commands::BatteryInfo => info_battery(&kindle_manager).await,
+                Commands::DebugPrint { message } => debug_print(&kindle_manager, &message).await,
+                Commands::Backlight { intensity } => set_backlight(&kindle_manager, intensity).await,
+                _ => unreachable!()
+            }
+        }
     }
 }
 
-async fn convert_image(background: BackgroundColor, origin: &PathBuf, destination: &PathBuf) {
+async fn convert_image(background: BackgroundColor, stretch: bool, origin: &PathBuf, destination: &PathBuf) {
     let color = match background {
         BackgroundColor::White => "white",
         BackgroundColor::LightGray => "gray60",
@@ -119,7 +134,7 @@ async fn convert_image(background: BackgroundColor, origin: &PathBuf, destinatio
         BackgroundColor::Black => "black",
     };
 
-    match image_converter::convert_image(color, origin, destination) {
+    match image_converter::convert_image(color, stretch, origin, destination) {
         Ok(_) => println!("Converted successfully"),
         Err(err) => {
             eprintln!("Failed to convert the image!");

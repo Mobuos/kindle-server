@@ -188,14 +188,21 @@ async fn submit_image_form(
         full_filename = format!("{}.png", user_filename);
     }
 
-    // TODO: Rotation
     if form.horizontal {
-        todo!("Horizontal rotation is not implemented yet :(");
-    }
+        println!("Submitted image is being rotated by 90 degrees");
+        let output = Command::new("magick")
+            .arg(format!("images/{}.png", user_filename))
+            .args(["-rotate", "90"])
+            .arg(format!("images/{}.png", user_filename))
+            .output()
+            .expect("Failed to convert image to PNG");
+        if !output.status.success() {
+            let stdout = String::from_utf8(output.stdout).unwrap();
+            let stderr = String::from_utf8(output.stderr).unwrap();
 
-    // TODO: Fit / Stretch
-    if form.stretch {
-        todo!("Stretching the image is not implemented yet :(");
+            eprintln!("out: {stdout}");
+            eprintln!("err: {stderr}");
+        }
     }
 
     // Get Background Color
@@ -213,6 +220,7 @@ async fn submit_image_form(
     // Convert image to Kindle-appropriate format
     match image_converter::convert_image(
         &bg_color,
+        form.stretch,
         &PathBuf::from(format!("images/{full_filename}")),
         &PathBuf::from(format!("converted/{full_filename}")),
     ) {

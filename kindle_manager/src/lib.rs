@@ -260,16 +260,21 @@ pub mod image_converter {
     // TODO: Check if the raster library can replace this
     pub fn convert_image(
         background: &str,
+        stretch: bool,
         origin: &PathBuf,
         destination: &PathBuf,
     ) -> Result<(), KindleManagerError> {
+        let mut resize = "";
+        if stretch {
+            resize = "!";
+        }
         let stdout = Command::new("magick")
             .arg(origin)
             .args([
                 "-filter",
                 "LanczosSharp",
                 "-resize",
-                "758x1024",
+                &format!("758x1024{}", resize),
                 "-background",
                 background,
                 "-gravity",
