@@ -1,3 +1,7 @@
 [default]
 temp_dir = "images/tmp"
 address = "0.0.0.0"
+
+[default.limits]
+file = "5MiB"
+data-form = "5MiB"

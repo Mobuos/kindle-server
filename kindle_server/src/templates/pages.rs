@@ -25,7 +25,7 @@ pub fn main(server_images: Option<&Vec<String>>) -> Markup {
                                 .block.flex-1.border-0.bg-transparent.text-gray-900.text-sm.font-semibold
                                 ."placeholder:text-gray-400"."focus:ring-0";
                         }
-                        input type="file" id="file" name="file" accept="image/png, image/jpeg" required
+                        input type="file" id="file" name="file" accept="image/png, image/jpeg, image/webp, image/bmp" required
                             onchange="set_filename_from_upload()"
                             .text-sm.text-gray-500
                             ."file:hidden"."focus:outline-none";

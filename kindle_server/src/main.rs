@@ -7,7 +7,7 @@ use std::process::Command;
 use std::sync::Mutex;
 use std::{env, fs, io};
 
-use rocket::form::Form;
+use rocket::form::{Error, Form};
 use rocket::fs::{relative, FileName, FileServer, TempFile};
 use rocket::http::{ContentType, Status};
 
@@ -47,7 +47,7 @@ struct UploadImage<'v> {
     horizontal: bool,
     stretch: bool,
     background_color: &'v str,
-    // #[field(validate = supported_images())]
+    #[field(validate = supported_file_types())]
     file: TempFile<'v>,
 }
 
@@ -92,26 +92,24 @@ fn valid_filename<'v>(filename: &str) -> form::Result<'v, ()> {
     Ok(())
 }
 
-// TODO: for some reason is identifying webp as .bin (?)
-// fn supported_images<'v>(file: &TempFile<'_>) -> Result<(), Errors<'v>> {
-//     if let Some(file_ct) = file.content_type() {
-//         TODO: Doesn't let me use match here (?)
-//         if file_ct == &ContentType::PNG
-//             || file_ct == &ContentType::JPEG
-//             || file_ct == &ContentType::WEBP
-//             || file_ct == &ContentType::BMP
-//         {
-//             return Ok(());
-//         }
-//     }
+fn supported_file_types<'v>(file: &TempFile<'_>) -> form::Result<'v, ()> {
+    if let Some(file_ct) = file.content_type() {
+        if file_ct == &ContentType::PNG
+            || file_ct == &ContentType::JPEG
+            || file_ct == &ContentType::WEBP
+            || file_ct == &ContentType::BMP
+        {
+            return Ok(());
+        }
+    }
 
-//     let msg = match file.content_type().and_then(|c| c.extension()) {
-//         Some(a) => format!("invalid file type: .{}, must be PNG, JPEG or WEBP", a),
-//         None => format!("file type must be PNG, JPEG or WEBP"),
-//     };
+    let msg = match file.content_type().and_then(|c| c.extension()) {
+        Some(a) => format!("invalid file type: .{}, must be PNG, JPEG, BMP or WEBP", a),
+        None => format!("file type must be PNG, JPEG, BMP or WEBP"),
+    };
 
-//     Err(Error::validation(msg))?
-// }
+    Err(Error::validation(msg))?
+}
 
 // ------- Routes ---------- //
 #[get("/")]

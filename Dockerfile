@@ -8,13 +8,19 @@ RUN apk update && apk add --no-cache \
     imagemagick \
     imagemagick-dev \
     imagemagick-libs \
-    # Image format delegates
+    # Core image format delegates
     jpeg-dev \
     libpng-dev \
     libjpeg-turbo \
     libjpeg-turbo-dev \
+    # WebP support
     libwebp-dev \
+    libwebp-tools \
+    # BMP and other formats
     tiff-dev \
+    giflib-dev \
+    librsvg-dev \
+    libxpm-dev \
     openssh
 
 # Create directories and set permissions
