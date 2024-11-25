@@ -23,9 +23,9 @@ docker run -d -p 8000:8000 -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-ag
 
 For development, inside the `kindle_server` folder:
 
-To re-build tailwind stylesheets after changes:
+To re-build tailwind stylesheets after changes (Requires Tailwind CLI):
 ```bash
-./tailwind -i static/style.css -o static/tw.css --watch
+./tailwind -i ./kindle_server/static/res/style.css -o ./kindle_server/static/res/tw.css --watch
 ```
 
 To run the server:

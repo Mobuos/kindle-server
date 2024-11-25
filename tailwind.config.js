@@ -2,7 +2,7 @@
 const defaultTheme = require('tailwindcss/defaultTheme')
 
 module.exports = {
-  content: ["./src/templates/*"],
+  content: ["./kindle_server/src/templates/*"],
   theme: {
     extend: {
       fontFamily: {
