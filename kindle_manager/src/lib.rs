@@ -23,6 +23,12 @@ pub enum KindleManagerError {
 
     #[error("Argument out of allowed range: {0}")]
     OutOfRange(String),
+
+    #[error("Command failed, file already exists: {0}")]
+    FileExists(String),
+
+    #[error("Command failed, file doesn't exist: {0}")]
+    FileMissing(String),
 }
 
 #[derive(Debug)]
@@ -139,13 +145,28 @@ impl KindleManager {
         Ok(files)
     }
 
+    pub async fn file_exists(
+        &self,
+        session: &Session,
+        kindle_filename: &str,
+    ) -> Result<bool, KindleManagerError> {
+        return Ok(self
+            .list_files(session)
+            .await?
+            .iter()
+            .any(|filename| filename == kindle_filename));
+    }
+
     pub async fn push_file(
         &self,
         session: &Session,
         local_file_path: &Path,
         kindle_filename: &str,
     ) -> Result<(), KindleManagerError> {
-        session.check().await?;
+        if self.file_exists(&session, kindle_filename).await? {
+            return Err(KindleManagerError::FileExists(format!("{kindle_filename}")));
+        }
+
         let _ = Command::new("scp")
             .arg(local_file_path)
             .arg(format!(
@@ -164,7 +185,12 @@ impl KindleManager {
         kindle_filename: &str,
         local_file_path: &Path,
     ) -> Result<(), KindleManagerError> {
-        session.check().await?;
+        if !self.file_exists(&session, kindle_filename).await? {
+            return Err(KindleManagerError::FileMissing(format!(
+                "{kindle_filename}"
+            )));
+        }
+
         let _ = Command::new("scp")
             .arg(format!(
                 "{}:{}/{}",
@@ -177,11 +203,41 @@ impl KindleManager {
         Ok(())
     }
 
+    pub async fn rename_file(
+        &self,
+        session: &Session,
+        old_filename: &str,
+        new_filename: &str,
+    ) -> Result<(), KindleManagerError> {
+        if !self.file_exists(&session, old_filename).await? {
+            return Err(KindleManagerError::FileMissing(format!("{old_filename}")));
+        }
+        if self.file_exists(&session, new_filename).await? {
+            return Err(KindleManagerError::FileExists(format!("{new_filename}")));
+        }
+
+        let _ = session
+            .command("mv")
+            .arg(format!("{}/{}", self.location, old_filename))
+            .arg(format!("{}/{}", self.location, new_filename))
+            .output()
+            .await?
+            .check_stdout()?;
+
+        Ok(())
+    }
+
     pub async fn delete_file(
         &self,
         session: &Session,
         kindle_filename: &str,
     ) -> Result<(), KindleManagerError> {
+        if !self.file_exists(&session, kindle_filename).await? {
+            return Err(KindleManagerError::FileMissing(format!(
+                "{kindle_filename}"
+            )));
+        }
+
         let _ = session
             .command("rm")
             .arg(format!("{}/{}", self.location, kindle_filename))
@@ -197,6 +253,10 @@ impl KindleManager {
         session: &Session,
         filename: &str,
     ) -> Result<(), KindleManagerError> {
+        if !self.file_exists(&session, filename).await? {
+            return Err(KindleManagerError::FileMissing(format!("{filename}")));
+        }
+
         let _ = session
             .command("sh")
             .arg("-c")

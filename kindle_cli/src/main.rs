@@ -37,6 +37,10 @@ enum Commands {
         filename: String,
         file_path: PathBuf,
     },
+    Rename {
+        old_filename: String,
+        new_filename: String,
+    },
     /// Shows an image on screen from the specified location
     Set { filename: String },
     /// Prints information about the current battery state
@@ -105,6 +109,7 @@ async fn main() {
             filename,
             file_path,
         } => pull_file(&kindle_manager, &filename, &file_path).await,
+        Commands::Rename { old_filename, new_filename } => rename(&kindle_manager, &old_filename, &new_filename).await,
         Commands::Set { filename } => set_image(&kindle_manager, &filename).await,
         Commands::BatteryInfo => info_battery(&kindle_manager).await,
         Commands::DebugPrint { message } => debug_print(&kindle_manager, &message).await,
@@ -202,6 +207,18 @@ async fn push_file(kindle_manager: &KindleManager, file_path: &PathBuf, filename
         Ok(_) => println!("Pushed \"{filename}\""),
         Err(err) => {
             eprintln!("Failed to push file");
+            eprintln!("{err}");
+            process::exit(1);
+        }
+    }
+}
+
+async fn rename(kindle_manager: &KindleManager, old_filename: &str, new_filename: &str) {
+    let session = new_session(&kindle_manager).await;
+    match kindle_manager.rename_file(&session, old_filename, new_filename).await {
+        Ok(_) => println!("Renamed \"{old_filename}\" to \"{new_filename}\""),
+        Err(err) => {
+            eprintln!("Failed to rename file");
             eprintln!("{err}");
             process::exit(1);
         }
