@@ -72,7 +72,7 @@ pub fn server_images(images: Option<&Vec<String>>) -> Markup {
     html! {
         @match images {
             Some(images) if !images.is_empty() => {
-                .grid."grid-cols-2"."sm:grid-cols-4"."md:grid-cols-5".gap-x-3.gap-y-5{
+                .grid."grid-cols-2"."sm:grid-cols-4"."md:grid-cols-5".gap-x-4.gap-y-5{
                     @for filename in images {
                         (self::show_image(filename))
                     }
@@ -92,26 +92,62 @@ pub fn server_images(images: Option<&Vec<String>>) -> Markup {
     }
 }
 
+pub fn show_edit_image_name(image_name: &str) -> Markup {
+    html! {
+        form .flex.items-center.h-10 {
+            input type="text" id="text" name="text" value=(image_name)
+                .flex-1.text-gray-900.text-sm.font-semibold.w-1.h-full
+                .rounded-l-md.shadow-sm.ring-1.ring-inset.border-0.ring-gray-300.bg-white
+                ."focus-within:ring-inset"."focus-within:ring-indigo-600"."focus-within:ring-2"
+                ."placeholder:text-gray-400";
+            button .btn-primary.h-full.rounded-l-none.px-2
+                hx-patch={"/images/"(image_name)}
+                hx-swap="outerHTML"
+                hx-target="closest .image"
+                hx-include="previous input" {
+                    svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" {
+                        polyline points="20 6 9 17 4 12" {}
+                    }
+            }
+        }
+    }
+}
+
+pub fn show_image_name(image_name: &str) -> Markup {
+    html! {
+        .flex.items-center.gap-2.h-10 {
+            span .text-sm.flex-1 { (image_name) }
+            button .btn-secondary.h-full.px-2
+                hx-get={"/forms/rename/"(image_name)} hx-target="closest div" hx-swap="outerHTML" {
+                svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" {
+                    path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" {}
+                    path d="m15 5 4 4" {}
+                }
+            }
+        }
+    }
+}
+
 pub fn show_image(filename: &str) -> Markup {
     let image_name = filename.split(".").next().unwrap_or(filename);
     html! {
-        form {
+        form .image {
             input type="hidden" name="text" value=(filename);
-            img .rounded-md src={"converted/"(filename)}
+            (show_image_name(image_name))
+            img .rounded-md.my-2 src={"converted/"(filename)}
                 onerror="this.onerror=null; this.src='static/resources/notfound.png'"
                 hx-post="/set"
                 hx-vals={"{{\"image_name\": "(filename)"}}"}
                 hx-trigger="click";
-            p { (image_name) }
             // TODO: Delete should give the image_name without extension, server side deletes all images
             // with this name no matter the extension (Is this dangerous?)
-            .flex.w-full.gap-4 {
-                button hx-post={"/set"} hx-vals={"{{\"image_name\": "(filename)"}}"} hx-swap="outerHTML swap:0.5s"
-                    .btn-primary.flex-1
-                    { "Set" }
+            .flex.w-full.gap-2 {
                 button hx-delete={"/"(filename)} hx-target="closest form" hx-swap="outerHTML swap:0.5s"
                     .btn-secondary.flex-1
                     { "Delete" }
+                button hx-post={"/set"} hx-vals={"{{\"image_name\": "(filename)"}}"} hx-swap="none"
+                    .btn-primary.flex-1
+                    { "Set" }
             }
         }
     }

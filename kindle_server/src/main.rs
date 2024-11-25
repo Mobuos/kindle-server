@@ -15,7 +15,7 @@ use maud::{html, Markup};
 
 // maud templates
 mod templates;
-use templates::{errors, oob, pages};
+use templates::{elements, errors, oob, pages};
 
 #[macro_use]
 extern crate rocket;
@@ -128,6 +128,66 @@ async fn view_index(km: &State<KindleM>) -> Markup {
             eprintln!("> Failed to create SSH session");
             eprintln!("{err}");
             pages::main(None)
+        }
+    }
+}
+
+#[get("/forms/rename/<image_name>")]
+async fn form_rename(image_name: &str) -> Markup {
+    elements::show_edit_image_name(image_name)
+}
+
+#[patch("/images/<image_name>", data = "<new_name>")]
+async fn rename_image(
+    km: &State<KindleM>,
+    image_name: &str,
+    new_name: Form<TextForm>,
+) -> Result<Markup, io::Error> {
+    let new_name = format!("{}.png", new_name.text);
+    let image_name = format!("{}.png", image_name);
+
+    if new_name == image_name {
+        println!("No change in image name, not renaming.");
+        return Ok(elements::show_image(&image_name));
+    }
+
+    println!("Image name is {image_name}, renaming to {new_name}");
+
+    let session = km
+        .manager
+        .new_session()
+        .await
+        .expect("Failed to create SSH session");
+
+    match km
+        .manager
+        .rename_file(&session, &format!("{image_name}"), &format!("{new_name}"))
+        .await
+    {
+        Ok(_) => {
+            match fs::rename(
+                format!("converted/{image_name}"),
+                format!("converted/{new_name}"),
+            ) {
+                Ok(_) => (),
+                Err(err) => {
+                    eprintln!("Failed to rename converted/{image_name} to converted/{new_name}");
+                    eprintln!("{err}");
+                }
+            }
+            match fs::rename(format!("images/{image_name}"), format!("images/{new_name}")) {
+                Ok(_) => (),
+                Err(err) => {
+                    eprintln!("Failed to rename images/{image_name} to images/{new_name}");
+                    eprintln!("{err}");
+                }
+            }
+            Ok(elements::show_image(&new_name))
+        }
+        Err(err) => {
+            eprintln!("Failed to rename image on the Kindle");
+            eprintln!("{err}");
+            Ok(elements::show_image(&image_name))
         }
     }
 }
@@ -460,7 +520,15 @@ fn rocket() -> _ {
         // Routes
         .mount(
             "/",
-            routes![submit_image_form, view_index, set_image, delete_image, sync],
+            routes![
+                submit_image_form,
+                view_index,
+                set_image,
+                delete_image,
+                sync,
+                form_rename,
+                rename_image
+            ],
         )
         .mount("/stats", routes![stats_battery, stats_files])
         // Static files
