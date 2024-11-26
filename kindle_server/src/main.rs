@@ -525,7 +525,7 @@ async fn sync(
                 "> Failed to acquire list of images on the Kindle, cancelling the Sync operation"
             );
             eprintln!("{err}");
-            let (status, error_banner) = err.to_error_banner();
+            let (_, error_banner) = err.to_error_banner();
             Ok(html! {
                 (oob::swap_server_images(None))
                 (error_banner)

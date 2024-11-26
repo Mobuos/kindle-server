@@ -34,8 +34,8 @@ pub fn nav() -> Markup {
 
 pub fn footer() -> Markup {
     html! {
-        footer ."bg-gray-800".rounded-lg.shadow.m-4 {
-            .w-full.mx-auto.max-w-screen-xl."p-4"."md:flex"."md:items-center"."md:justify-between" {
+        footer {
+            ."bg-gray-800".rounded-lg.shadow.m-4.w-full.mx-auto.max-w-5xl."p-4"."md:flex"."md:items-center"."md:justify-between" {
                 p .text-sm.text-gray-400 {
                     "Made by "
                     a href="https://github.com/Mobuos" ."hover:underline" { "mobuos" }
