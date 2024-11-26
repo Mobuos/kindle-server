@@ -22,7 +22,7 @@ pub fn main(server_images: Option<&Vec<String>>) -> Markup {
             //     }
             // }
             // Submission Form
-            form hx-post="/" hx-encoding="multipart/form-data" hx-swap="none"
+            form hx-post="/" hx-encoding="multipart/form-data" hx-swap="none" hx-indicator="this"
                 .grid.grid-cols-1.gap-x-6.gap-y-7.pb-12 {
                     // Choose image and rename
                     div {
@@ -128,12 +128,13 @@ pub fn main(server_images: Option<&Vec<String>>) -> Markup {
 
                     // Submit buttons
                     .flex.items-center.justify-end.gap-x-6 {
+                        .indicator {
+                            img .indicator-loading width="16px" src="/static/resources/pulse-rings-1.svg";
+                        }
                         button name="set_image" value="false" type="submit"
-                            .btn-secondary
-                            { "Upload" }
+                            .btn-secondary.indicator { "Upload" }
                         button name="set_image" value="true" type="submit"
-                            .btn-primary
-                            { "Upload and Set" }
+                            .btn-primary.indicator { "Upload and Set" }
                     }
             }
 

@@ -18,10 +18,10 @@ pub fn nav() -> Markup {
                                 ."text-white/70" {
                                 "Checking File Count.."
                             }
-                            li hx-post="/sync" hx-swap="none" hx-indicator=".sync" {
+                            li .indicator hx-post="/sync" hx-swap="none" hx-indicator="closest .indicator" {
                                 button .btn-primary {
-                                    div .sync #sync-text { "Sync" }
-                                    img .sync #sync-loading width="16px" src="/static/resources/pulse-rings-2.svg";
+                                    div .indicator-text { "Sync" }
+                                    img .indicator-loading width="16px" src="/static/resources/pulse-rings-2.svg";
                                 }
                             }
                         }
@@ -142,12 +142,16 @@ pub fn show_image(filename: &str) -> Markup {
             // TODO: Delete should give the image_name without extension, server side deletes all images
             // with this name no matter the extension (Is this dangerous?)
             .flex.w-full.gap-2 {
-                button hx-delete={"/"(filename)} hx-target="closest form" hx-swap="outerHTML swap:0.5s"
-                    .btn-secondary.flex-1
-                    { "Delete" }
-                button hx-post={"/set"} hx-vals={"{{\"image_name\": "(filename)"}}"} hx-swap="none"
-                    .btn-primary.flex-1
-                    { "Set" }
+                button hx-delete={"/"(filename)} hx-target="closest form" hx-swap="outerHTML swap:0.5s" hx-indicator="closest .indicator"
+                    .btn-secondary.flex-1.indicator {
+                        div .indicator-text { "Delete" }
+                        img .indicator-loading width="16px" src="/static/resources/pulse-rings-1.svg";
+                }
+                button hx-post={"/set"} hx-vals={"{{\"image_name\": "(filename)"}}"} hx-swap="none" hx-indicator="closest .indicator"
+                    .btn-primary.flex-1.indicator {
+                        div .indicator-text { "Set" }
+                        img .indicator-loading width="16px" src="/static/resources/pulse-rings-2.svg";
+                    }
             }
         }
     }

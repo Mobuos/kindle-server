@@ -18,18 +18,18 @@ form.htmx-swapping {
 }
 
 /* Loading */
-#sync-text {
+.indicator-text {
     display: inline;
 }
 
-#sync-text.htmx-request{
+.htmx-request .indicator-text{
     display: none;
 }
 
-#sync-loading {
+.indicator-loading {
     display: none;
 }
 
-#sync-loading.htmx-request{
+.htmx-request .indicator-loading {
     display: inline;
 }
