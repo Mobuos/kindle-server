@@ -1,7 +1,9 @@
-use kindle_manager::{image_converter, KindleManager};
-use rocket::{form, Request, State};
+use kindle_manager::{image_converter, KindleManager, KindleManagerError};
+use rocket::response::{self, Responder};
+use rocket::{form, Request, Response, State};
 
 use std::collections::HashSet;
+use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
@@ -13,6 +15,8 @@ use rocket::http::{ContentType, Status};
 
 use maud::{html, Markup};
 
+use thiserror::Error;
+
 // maud templates
 mod templates;
 use templates::{elements, errors, oob, pages};
@@ -23,6 +27,134 @@ extern crate rocket;
 #[catch(404)]
 fn not_found(req: &Request<'_>) -> Markup {
     errors::e404(&req.uri().to_string())
+}
+
+// Wrapper Error Type
+#[derive(Debug, Error)]
+pub enum ServerError {
+    #[error("Kindle error occurred: {0}")]
+    KindleError(#[from] KindleManagerError),
+
+    #[error("IO error occurred: {0}")]
+    IOError(#[from] io::Error),
+
+    #[error("Other error occurred: {0}")]
+    Other(String),
+}
+
+trait ErrorBannerPartial {
+    fn to_error_banner(self) -> (Status, Markup);
+}
+
+impl ErrorBannerPartial for ServerError {
+    fn to_error_banner(self) -> (Status, Markup) {
+        match self {
+            ServerError::KindleError(err) => err.to_error_banner(),
+            ServerError::IOError(err) => {
+                let error_banner = oob::error_banner(
+                    "IO Error",
+                    "An error occurred while storing files on the Server.",
+                );
+                eprintln!("> An error occurred while storing files on the Server.");
+                eprintln!("{err}");
+                (Status::Ok, error_banner)
+            }
+            ServerError::Other(msg) => {
+                let error_banner =
+                    oob::error_banner("Internal Server Error", "An error occurred on the Server.");
+                eprintln!("> An error occurred on the Server.");
+                eprintln!("{msg}");
+                (Status::Ok, error_banner)
+            }
+        }
+    }
+}
+
+impl ErrorBannerPartial for KindleManagerError {
+    fn to_error_banner(self) -> (Status, Markup) {
+        match self {
+            KindleManagerError::CommandError(msg) => {
+                let error_banner = oob::error_banner(
+                    "Kindle Command Error",
+                    "An error occurred when executing a command on the Kindle.",
+                );
+                eprintln!("> An error occurred when executing a command on the Kindle.");
+                eprintln!("{msg}");
+                (Status::Ok, error_banner)
+            }
+            KindleManagerError::FileExists(msg) => {
+                let error_banner = oob::error_banner(
+                    "File conflict",
+                    "A file with this same name already exists on the Kindle.",
+                );
+                eprintln!("> A file with this same name already exists on the Kindle.");
+                eprintln!("{msg}");
+                (Status::Ok, error_banner)
+            }
+            KindleManagerError::FileMissing(msg) => {
+                let error_banner = oob::error_banner(
+                    "File not found",
+                    "The requested file is missing on the Kindle.",
+                );
+                eprintln!("> The requested file is missing on the Kindle.");
+                eprintln!("{msg}");
+                (Status::Ok, error_banner)
+            }
+            KindleManagerError::OutOfRange(msg) => {
+                let error_banner = oob::error_banner(
+                    "Internal Server Error",
+                    "An argument passed to the Kindle Manager is out of the allowed range.",
+                );
+                eprintln!(
+                    "> An argument passed to the Kindle Manager is out of the allowed range."
+                );
+                eprintln!("{msg}");
+                (Status::Ok, error_banner)
+            }
+            KindleManagerError::SshError(err) => {
+                let error_banner = oob::error_banner(
+                    "SSH Error",
+                    "An error occurred while trying to connect to the Kindle.",
+                );
+                eprintln!("> An error occurred while trying to connect to the Kindle.");
+                eprintln!("{err}");
+                (Status::Ok, error_banner)
+            }
+            KindleManagerError::StdioError(err) => {
+                let error_banner = oob::error_banner(
+                    "IO Error",
+                    "An error occurred while trying to read the output from a Kindle command.",
+                );
+                eprintln!(
+                    "> An error occurred while trying to read the output from a Kindle command."
+                );
+                eprintln!("{err}");
+                (Status::Ok, error_banner)
+            }
+            KindleManagerError::Utf8Error(err) => {
+                let error_banner =
+                    oob::error_banner("Bad Request", "Failed to interpret data as UTF-8");
+                eprintln!("> Failed to interptet data as UTF-8");
+                eprintln!("{err}");
+                (Status::Ok, error_banner)
+            }
+        }
+    }
+}
+
+// Responder to KindleManagerError
+impl<'r, 'o: 'r> Responder<'r, 'o> for ServerError {
+    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'o> {
+        let (status, body) = self.to_error_banner();
+
+        // Build the response
+        let body = body.into_string();
+        Response::build()
+            .status(status)
+            .header(ContentType::HTML) // Use the appropriate content type for your HTML
+            .sized_body(body.len(), Cursor::new(body))
+            .ok()
+    }
 }
 
 // Images on the Server
@@ -77,7 +209,11 @@ async fn oob_swap_server_images(km: &State<KindleM>, session: &openssh::Session)
         Err(err) => {
             eprintln!("> Failed to acquire image names");
             eprintln!("{err}");
-            oob::swap_server_images(None)
+            let (_, error_banner) = err.to_error_banner();
+            html! {
+                (oob::swap_server_images(None))
+                (error_banner)
+            }
         }
     }
 }
@@ -113,21 +249,29 @@ fn supported_file_types<'v>(file: &TempFile<'_>) -> form::Result<'v, ()> {
 
 // ------- Routes ---------- //
 #[get("/")]
-async fn view_index(km: &State<KindleM>) -> Markup {
+async fn view_index(km: &State<KindleM>) -> Result<Markup, ServerError> {
     let session = km.manager.new_session().await;
     match session {
         Ok(session) => match km.manager.list_files(&session).await {
-            Ok(filenames) => pages::main(Some(&filenames)),
+            Ok(filenames) => Ok(pages::main(Some(&filenames))),
             Err(err) => {
                 eprintln!("> Failed to acquire filenames");
                 eprintln!("{err}");
-                pages::main(None)
+                let (_, error_banner) = err.to_error_banner();
+                Ok(html! {
+                    (pages::main(None))
+                    (error_banner)
+                })
             }
         },
         Err(err) => {
             eprintln!("> Failed to create SSH session");
             eprintln!("{err}");
-            pages::main(None)
+            let (_, error_banner) = err.to_error_banner();
+            Ok(html! {
+                (pages::main(None))
+                (error_banner)
+            })
         }
     }
 }
@@ -142,52 +286,55 @@ async fn rename_image(
     km: &State<KindleM>,
     image_name: &str,
     new_name: Form<TextForm>,
-) -> Result<Markup, io::Error> {
+) -> (Status, Markup) {
     let new_name = format!("{}.png", new_name.text);
     let image_name = format!("{}.png", image_name);
 
-    if new_name == image_name {
-        println!("No change in image name, not renaming.");
-        return Ok(elements::show_image(&image_name));
+    async fn rename(
+        km: &State<KindleM>,
+        image_name: &str,
+        new_name: &str,
+    ) -> Result<(Status, Markup), ServerError> {
+        if new_name == image_name {
+            println!("No change in image name, not renaming.");
+            return Ok((Status::Ok, elements::show_image(&image_name)));
+        }
+
+        println!("Image name is {image_name}, renaming to {new_name}");
+
+        let session = km.manager.new_session().await?;
+        km.manager
+            .rename_file(&session, &format!("{image_name}"), &format!("{new_name}"))
+            .await?;
+
+        // As long as the renaming operation was successful on the Kindle, we can continue
+        if let Err(err) = fs::rename(
+            format!("converted/{image_name}"),
+            format!("converted/{new_name}"),
+        ) {
+            eprintln!("Failed conversion on the converted/ folder, continuing as normal");
+            eprintln!("{err}")
+        }
+
+        if let Err(err) = fs::rename(format!("images/{image_name}"), format!("images/{new_name}")) {
+            eprintln!("Failed conversion on the images/ folder, continuing as normal");
+            eprintln!("{err}")
+        }
+
+        Ok((Status::Ok, elements::show_image(&new_name)))
     }
 
-    println!("Image name is {image_name}, renaming to {new_name}");
-
-    let session = km
-        .manager
-        .new_session()
-        .await
-        .expect("Failed to create SSH session");
-
-    match km
-        .manager
-        .rename_file(&session, &format!("{image_name}"), &format!("{new_name}"))
-        .await
-    {
-        Ok(_) => {
-            match fs::rename(
-                format!("converted/{image_name}"),
-                format!("converted/{new_name}"),
-            ) {
-                Ok(_) => (),
-                Err(err) => {
-                    eprintln!("Failed to rename converted/{image_name} to converted/{new_name}");
-                    eprintln!("{err}");
-                }
-            }
-            match fs::rename(format!("images/{image_name}"), format!("images/{new_name}")) {
-                Ok(_) => (),
-                Err(err) => {
-                    eprintln!("Failed to rename images/{image_name} to images/{new_name}");
-                    eprintln!("{err}");
-                }
-            }
-            Ok(elements::show_image(&new_name))
-        }
+    match rename(&km, &image_name, &new_name).await {
+        Ok((status, body)) => (status, body),
         Err(err) => {
-            eprintln!("Failed to rename image on the Kindle");
-            eprintln!("{err}");
-            Ok(elements::show_image(&image_name))
+            let (_, error_banner) = err.to_error_banner();
+            (
+                Status::Ok,
+                html! {
+                    (elements::show_image(&image_name))
+                    (error_banner)
+                },
+            )
         }
     }
 }
@@ -197,13 +344,9 @@ async fn submit_image_form(
     mut form: Form<UploadImage<'_>>,
     server_images: &State<ServerImages>,
     km: &State<KindleM>,
-) -> Result<Markup, io::Error> {
+) -> Result<Markup, ServerError> {
     // Establish connection to Kindle
-    let session = km
-        .manager
-        .new_session()
-        .await
-        .expect("Failed to create SSH session");
+    let session = km.manager.new_session().await?;
 
     // Save file to server
     let og_file_extension = form
@@ -227,17 +370,9 @@ async fn submit_image_form(
         .to_string();
 
     let mut full_filename = format!("{}.{}", user_filename, og_file_extension);
-    match form
-        .file
+    form.file
         .persist_to(format!("images/{}", full_filename))
-        .await
-    {
-        Ok(_) => (),
-        Err(error) => {
-            println!("Problem persisting file to system: {:?}", error);
-            return Err(error);
-        }
-    };
+        .await?;
 
     // Convert image to png in the server if it's not a PNG already
     // Also reduce it's size if needed
@@ -308,57 +443,38 @@ async fn submit_image_form(
                 "Problem converting {} to proper kindle-readable format: {:?}",
                 user_filename, error
             );
-            return Err(std::io::Error::other("Failed conversion"));
+            Err(ServerError::Other("Failed conversion".into()))?;
         }
     }
 
     // Push file to Kindle and set it
-    if let Err(err) = km
-        .manager
+    km.manager
         .push_file(
             &session,
             &PathBuf::from(format!("converted/{}", full_filename)),
             &full_filename,
         )
-        .await
-    {
-        eprintln!("> Failed to push image!");
-        eprintln!("{err}");
-    }
+        .await?;
     if form.set_image {
-        if let Err(err) = km.manager.set_image(&session, &full_filename).await {
-            eprintln!("> Failed to set image!");
-            eprintln!("{err}");
-        }
+        km.manager.set_image(&session, &full_filename).await?;
     }
 
     Ok(oob_swap_server_images(km, &session).await)
 }
 
 #[post("/set", data = "<image_name>")]
-async fn set_image(image_name: Form<TextForm>, km: &State<KindleM>) -> Status {
-    let session = km
-        .manager
-        .new_session()
-        .await
-        .expect("Failed to create SSH session");
-    if let Err(err) = km.manager.set_image(&session, &image_name.text).await {
-        eprintln!("> Failed to set image!");
-        eprintln!("{err}");
-    }
-    return Status::Ok;
+async fn set_image(image_name: Form<TextForm>, km: &State<KindleM>) -> Result<Status, ServerError> {
+    let session = km.manager.new_session().await?;
+    km.manager.set_image(&session, &image_name.text).await?;
+    return Ok(Status::Ok);
 }
 
 #[post("/sync")]
 async fn sync(
     server_images: &State<ServerImages>,
     km: &State<KindleM>,
-) -> Result<Markup, io::Error> {
-    let session = km
-        .manager
-        .new_session()
-        .await
-        .expect("Failed to create SSH session");
+) -> Result<Markup, ServerError> {
+    let session = km.manager.new_session().await?;
     match km.manager.list_files(&session).await {
         Ok(image_names) => {
             let kindle_images: HashSet<String> = HashSet::from_iter(image_names);
@@ -409,7 +525,11 @@ async fn sync(
                 "> Failed to acquire list of images on the Kindle, cancelling the Sync operation"
             );
             eprintln!("{err}");
-            Ok(oob::swap_server_images(None))
+            let (status, error_banner) = err.to_error_banner();
+            Ok(html! {
+                (oob::swap_server_images(None))
+                (error_banner)
+            })
         }
     }
 }

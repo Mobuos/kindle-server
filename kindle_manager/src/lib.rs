@@ -15,7 +15,7 @@ pub enum KindleManagerError {
     #[error("UTF-8 conversion failed: {0}")]
     Utf8Error(#[from] std::string::FromUtf8Error),
 
-    #[error("IO error occured: {0}")]
+    #[error("IO error occurred: {0}")]
     StdioError(#[from] std::io::Error),
 
     #[error("Command failed: {0}")]
