@@ -33,8 +33,8 @@ pub fn error_banner(title: &str, message: &str) -> Markup {
     html! {
         div hx-swap-oob="outerHTML:#newalert" {
             .alert.transition-opacity.duration-300.bg-red-100.border.border-red-400.text-red-700.px-4.py-3.rounded.relative.mb-6 role="alert" {
-                strong .font-bold { (title) }
-                span .block."sm:inline" { " "(message) }
+                strong .font-bold { (title)": " }
+                span .block."sm:inline" { (message) }
                 span .absolute.top-0.bottom-0.right-0.px-4.py-3 {
                     button .fill-current.h-6.w-6.text-red-500
                     hx-on="click: this.closest('.alert').remove()"
