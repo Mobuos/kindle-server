@@ -8,6 +8,8 @@ To run this project you need a jailbroken Kindle, configured to allow SSH connec
 
 ![Kindle Server UI](https://github.com/user-attachments/assets/6dfc2c4f-db49-4109-ab05-ee4b71e561e6)
 
+> This project is not under active development, but feel free to reach out :)
+
 ---
 
 You will also need a computer acting as a server, here's how I run the docker container:
