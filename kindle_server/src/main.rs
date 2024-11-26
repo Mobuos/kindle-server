@@ -32,7 +32,7 @@ fn not_found(req: &Request<'_>) -> Markup {
 // TODO: Proper form validation and feedback
 // TODO: Make HTMX swap 4xx and 5xx
 #[catch(422)]
-fn unprocessable_entity(req: &Request<'_>) -> (Status, Markup) {
+fn unprocessable_entity(_req: &Request<'_>) -> (Status, Markup) {
     (Status::Ok, oob::error_banner("Form error", "File must be PNG, JPEG, BMP or WEBP and its filename must be valid (i.e. No special characters)"))
 }
 
