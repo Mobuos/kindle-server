@@ -19,6 +19,8 @@ docker run -d -p 8000:8000 -v $SSH_AUTH_SOCK:/ssh-agent -e SSH_AUTH_SOCK=/ssh-ag
 
 **Note:** This will copy your `id_ed25519` key to the container, and forward your ssh-agent to avoid having to input a passphrase inside the container as well, adapt the command to fit your needs. Depending on how your server is set-up you might need to manually login into it and unlock the ssh key before running the server.
 
+Make sure to run `cargo run -p kindle_cli -- prep` to avoid having the kindle fall asleep.
+
 --- 
 
 For development, inside the `kindle_server` folder:
