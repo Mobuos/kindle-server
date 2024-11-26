@@ -192,7 +192,9 @@ struct UploadImage<'v> {
 
 // Simple text form
 #[derive(Debug, FromForm)]
-struct TextForm {
+struct FilenameForm {
+    #[field(validate = len(0..=20))]
+    #[field(validate = valid_filename())]
     text: String,
 }
 
@@ -292,7 +294,7 @@ async fn form_rename(image_name: &str) -> Markup {
 async fn rename_image(
     km: &State<KindleM>,
     image_name: &str,
-    new_name: Form<TextForm>,
+    new_name: Form<FilenameForm>,
 ) -> (Status, Markup) {
     let new_name = format!("{}.png", new_name.text);
     let image_name = format!("{}.png", image_name);
@@ -472,7 +474,10 @@ async fn submit_image_form(
 }
 
 #[post("/set", data = "<image_name>")]
-async fn set_image(image_name: Form<TextForm>, km: &State<KindleM>) -> Result<Status, ServerError> {
+async fn set_image(
+    image_name: Form<FilenameForm>,
+    km: &State<KindleM>,
+) -> Result<Status, ServerError> {
     let session = km.manager.new_session().await?;
     km.manager.set_image(&session, &image_name.text).await?;
     return Ok(Status::Ok);
