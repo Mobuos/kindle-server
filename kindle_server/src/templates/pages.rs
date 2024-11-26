@@ -23,7 +23,7 @@ pub fn main(server_images: Option<&Vec<String>>) -> Markup {
                                 ."hover:bg-indigo-500"
                                 { "Browse..." }
                             // Image name text input
-                            input type="text" id="filename" name="filename" placeholder="Image name"
+                            input autocomplete="off" type="text" id="filename" name="filename" placeholder="Image name"
                                 oninput="this.userChanged=true"
                                 .block.flex-1.border-0.bg-transparent.text-gray-900.text-sm.font-semibold
                                 ."placeholder:text-gray-400"."focus:ring-0";

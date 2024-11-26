@@ -95,7 +95,7 @@ pub fn server_images(images: Option<&Vec<String>>) -> Markup {
 pub fn show_edit_image_name(image_name: &str) -> Markup {
     html! {
         form .flex.items-center.h-10 {
-            input type="text" id="text" name="text" value=(image_name)
+            input autocomplete="off" type="text" id="text" name="text" value=(image_name)
                 .flex-1.text-gray-900.text-sm.font-semibold.w-1.h-full
                 .rounded-l-md.shadow-sm.ring-1.ring-inset.border-0.ring-gray-300.bg-white
                 ."focus-within:ring-inset"."focus-within:ring-indigo-600"."focus-within:ring-2"
