@@ -389,10 +389,12 @@ async fn submit_image_form(
         eprintln!("out: {stdout}");
         eprintln!("err: {stderr}");
     }
-    fs::remove_file(format!("images/{}", full_filename)).expect(&format!(
-        "Failed to delete original file \"{}\"",
-        full_filename
-    ));
+    if form.file.content_type() != Some(&ContentType::PNG) {
+        fs::remove_file(format!("images/{}", full_filename)).expect(&format!(
+            "Failed to delete original file \"{}\"",
+            full_filename
+        ));
+    }
     full_filename = format!("{}.png", user_filename);
 
     if form.horizontal {
