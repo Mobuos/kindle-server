@@ -6,7 +6,7 @@ This includes a simple web server and UI for displaying and managing images in `
 
 To run this project you need a jailbroken Kindle, configured to allow SSH connections (over wifi or usb). For more information check out the [MobileRead Forums](https://www.mobileread.com/forums/showthread.php?t=320564). This project was only tested with a PW2 Kindle.
 
-![Kindle Server UI](https://github.com/user-attachments/assets/d0a9d76d-494c-45ba-b956-5575b51752ce)
+![Kindle Server UI](https://github.com/user-attachments/assets/6dfc2c4f-db49-4109-ab05-ee4b71e561e6)
 
 ---
 
