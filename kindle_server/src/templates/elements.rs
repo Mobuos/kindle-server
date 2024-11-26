@@ -100,14 +100,16 @@ pub fn show_edit_image_name(image_name: &str) -> Markup {
                 .rounded-l-md.shadow-sm.ring-1.ring-inset.border-0.ring-gray-300.bg-white
                 ."focus-within:ring-inset"."focus-within:ring-indigo-600"."focus-within:ring-2"
                 ."placeholder:text-gray-400";
-            button .btn-primary.h-full.rounded-l-none.px-2
+            button .btn-primary.h-full.rounded-l-none.px-2.indicator
                 hx-patch={"/images/"(image_name)}
                 hx-swap="outerHTML"
                 hx-target="closest .image"
-                hx-include="previous input" {
-                    svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" {
+                hx-include="previous input"
+                hx-indicator="closest .indicator" {
+                    svg .indicator-text xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" {
                         polyline points="20 6 9 17 4 12" {}
                     }
+                    img .indicator-loading width="16px" src="/static/resources/pulse-rings-2.svg";
             }
         }
     }
